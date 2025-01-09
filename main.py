@@ -8,7 +8,7 @@ import json
 from discord.ext import commands
 import discord.ui
 
-toke_file = open("bot_token.env")
+toke_file = open("secret/bot_token.env")
 BOT_TOKEN = toke_file.read()
 
 # File path for storing user data
