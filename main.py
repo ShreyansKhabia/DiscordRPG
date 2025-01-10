@@ -71,8 +71,8 @@ biomes = {
 
 dialouges = {
     "Agrand": {
-        "Quest": "Yes mate, those bastard goblins have taken over our mine!"
-                 "\nIf somebody doesn't get rid of them we won't have new farming equipment!",
+        "Quest": "Yes mate, go kill some swamp lurches."
+                 "\nThose bastards have been chewing on my grain for weeks!",
         "Help": "You need help you say? Try typing !help to get a list of commands!"
     }
 }
@@ -101,7 +101,8 @@ async def initialize(ctx):
             "player_attack": 24,
             "player_energy": 10,
             "max_energy": 10,
-            "current_quest": []
+            "current_quest": [],
+            "progress": 0
         }
 
         # Save the updated user data to the file only when new data is added
@@ -182,6 +183,19 @@ async def get_place(ctx):
     return None
 
 
+async def quest(ctx, enemy, amount):
+    user_data_RPG = load_data()
+
+    user_id = str(ctx.author.id)
+
+    if user_data_RPG[user_id]["current_quest"]:
+        await ctx.send("You are already doing a quest!")
+    else:
+        user_data_RPG[user_id]["current_quest"] = [True]
+        await ctx.send(f"Kill {amount} {enemy}")
+        return enemy, amount  # Ensure you're returning the expected data
+
+
 async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     user_id = str(ctx.author.id)
 
@@ -231,23 +245,27 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
         await ctx.send("You have been defeated!")
     elif enemy_health <= 0:
         await asyncio.sleep(0.5)
+
         user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated after the fight
+
         await ctx.send(f"The {enemy_name} has been defeated!")
+
+        quest_enemy_name, quest_amount = quest()
+        progress = user_data_RPG[user_id]["progress"]
+
+        if enemy_name == quest_enemy_name:
+            progress += 1
+            user_data_RPG[user_id]["progress"] = progress
+            if progress == quest_amount:
+                await ctx.send("You have completed your quest!")
+            else:
+                await ctx.send(f"{progress} / {quest_amount}")
+        else:
+            pass
+
 
     # Save user data after the battle ends
     save_data(user_data_RPG)
-
-
-# to be finished :D
-async def quest(ctx, enemy, amount):
-    user_data_RPG = load_data()
-
-    quest = user_data_RPG["current_quest"]
-    if quest:
-        await ctx.send("You are already doing a quest!")
-    else:
-        await ctx.send(f"Kill {amount} {enemy}")
-
 
 
 @bot.command()
@@ -311,9 +329,12 @@ async def move(ctx, direction, amount):
                 await ctx.send(place["description"])
             else:
                 await ctx.send(biome["description"])
-                if encounter is not None:
+                if encounter:
+                    enemy_name, enemy_stats, freq = encounter
                     await ctx.send(f"You encounter a {enemy_name}")
                     await fight(ctx, enemy_stats["enemy_attack"], enemy_stats["enemy_health"], enemy_name)
+                else:
+                    pass
 
     else:
         await ctx.send("You are out of energy, try resting!")
@@ -470,9 +491,9 @@ async def talk(ctx, npc):
                             if interaction.user == ctx.author:
                                 if quest_button_option == "Yes":
                                     # Assign a quest to the player (example quest assignment)
-                                    user_data_RPG[interaction.user.id]["current_quest"] = [True]
                                     save_data(user_data_RPG)
                                     await interaction.response.send_message("Quest accepted!")
+                                    await quest(ctx, "Swamp_lurch".lower(), 3)
                                 elif quest_button_option == "No":
                                     await interaction.response.send_message("You have declined the quest.")
                                 # Remove quest buttons after decision
