@@ -14,7 +14,7 @@ BOT_TOKEN = toke_file.read()
 DATA_FILE = 'character_id.json'
 
 # Use a dictionary to store user-specific health and score
-user_data_RPG = {}
+
 
 
 # Helper function to load user data
@@ -229,7 +229,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
             player_health -= enemy_attack
             # Update player health in data during the battle
             user_data_RPG[user_id]['player_health'] = player_health
-            save_data(user_data_RPG)  # Save health data after each hit
             round_message.append(f"The {enemy_name} hits you for {enemy_attack} damage.")
         else:
             round_message.append(f"The {enemy_name} missed.")
@@ -251,12 +250,12 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     # Final outcome message
     if player_health <= 0:
         await ctx.send("You have been defeated!")
+        user_data_RPG[user_id]['player_health'] = 0  # Ensure health is set to 0 on defeat
     elif enemy_health <= 0:
         await asyncio.sleep(0.5)
 
         # Update health after battle
         user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated
-        save_data(user_data_RPG)  # Save health data
 
         await ctx.send(f"The {enemy_name} has been defeated!")
 
@@ -272,7 +271,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
                 progress += 1
                 current_quest["progress"] = progress
                 user_data_RPG[user_id]["current_quest"] = current_quest  # Update quest progress
-                save_data(user_data_RPG)  # Save progress
 
                 if progress == amount:
                     await ctx.send("You have completed your quest!")
