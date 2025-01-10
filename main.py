@@ -505,9 +505,6 @@ async def talk(ctx, npc):
         # Retrieve the dialogue options for the NPC
         npc_dialogue = dialouges[npc]
 
-        # Notify the player to choose an option
-        await ctx.send(f"Talking to {npc}. Please choose an option:")
-
         # Create a view to hold the buttons
         view = discord.ui.View()
 
@@ -524,10 +521,8 @@ async def talk(ctx, npc):
                         current_quest = user_data_RPG[user_id].get("current_quest", None)
 
                         if current_quest and current_quest["progress"] == current_quest["amount"]:
-                            if "clear" in npc_dialogue:
-                                await ctx.send(npc_dialogue["clear"])
-                            else:
-                                await ctx.send("Quest complete! Thank you.")
+                            quest_dialogue = npc_dialogue["Quest"]
+                            await ctx.send(quest_dialogue["clear"])
                         else:
                             quest_button_accept = discord.ui.Button(label="Yes", style=discord.ButtonStyle.green)
                             quest_button_decline = discord.ui.Button(label="No", style=discord.ButtonStyle.red)
@@ -535,7 +530,7 @@ async def talk(ctx, npc):
                             async def quest_button_callback(interaction, quest_button_option):
                                 if interaction.user == ctx.author:
                                     if quest_button_option == "Yes":
-                                        quest_info = npc_dialogue["Quest"]
+                                        quest_info = quest_dialogue["Quest"]
                                         await interaction.response.send_message("Quest accepted!")
                                         await quest(ctx, quest_info["enemy"], quest_info["amount"])
                                     elif quest_button_option == "No":
