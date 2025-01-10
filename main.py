@@ -261,6 +261,8 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
         await ctx.send(f"The {enemy_name} has been defeated!")
 
         # Handle quest progress
+        user_data_RPG = load_data()
+
         current_quest = user_data_RPG[user_id].get("current_quest", None)
 
         if current_quest:
@@ -572,6 +574,7 @@ async def help(ctx):
 async def stats(ctx):
     user_id = str(ctx.author.id)
     user_data_RPG = load_data()
+    print("Loaded user data in stats command:", user_data_RPG)
 
     # Check if user data exists
     if user_id not in user_data_RPG:
