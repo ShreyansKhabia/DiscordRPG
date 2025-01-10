@@ -53,7 +53,7 @@ places = {
 biomes = {
     "grassy plains": {
         "enemies": {
-            "Swamp lurches": {
+            "Swamp lurch": {
                 "enemy_health": 30,
                 "enemy_attack": 13
             },
@@ -75,7 +75,7 @@ dialouges = {
             "description":
                 "Yes mate, go kill some swamp lurches."
                 "\nThose bastards have been chewing on my grain for weeks!",
-            "enemy": "Swamp lurches",
+            "enemy": "Swamp lurch",
             "amount": 3
         },
         "Help": "You need help you say? Try typing !help to get a list of commands!"
@@ -207,7 +207,7 @@ async def quest(ctx, enemy, amount):
 async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     user_id = str(ctx.author.id)
 
-    # Load user data once at the beginning of the fight
+    # Load user data at the start of the fight
     user_data_RPG = load_data()
 
     # Get the player's initial health and attack values
@@ -229,7 +229,8 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
         enemy_roll = random.randint(1, player_attack + enemy_attack)
         if enemy_roll <= enemy_attack:
             player_health -= enemy_attack
-            user_data_RPG[user_id]['player_health'] = player_health  # Update player health during battle
+            # Update player health in data during the battle
+            user_data_RPG[user_id]['player_health'] = player_health
             round_message.append(f"The {enemy_name} hits you for {enemy_attack} damage.")
         else:
             round_message.append(f"The {enemy_name} missed.")
@@ -254,29 +255,35 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     elif enemy_health <= 0:
         await asyncio.sleep(0.5)
 
-        user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated after the fight
+        # Update health after battle
+        user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated
+        save_data(user_data_RPG)  # Save health data
 
         await ctx.send(f"The {enemy_name} has been defeated!")
 
+        # Handle quest progress
         current_quest = user_data_RPG[user_id].get("current_quest", None)
 
-        enemy = current_quest["enemy"]
-        amount = current_quest["amount"]
-        progress = current_quest["progress"]
+        if current_quest:
+            enemy = current_quest["enemy"]
+            amount = current_quest["amount"]
+            progress = current_quest["progress"]
 
-        if enemy_name == enemy:
-            progress += 1
-            current_quest["progress"] = progress
-            if progress == amount:
-                await ctx.send("You have completed your quest!")
-            else:
-                await ctx.send(f"{progress} / {amount}")
-        else:
-            pass
+            if enemy_name == enemy:
+                progress += 1
+                current_quest["progress"] = progress
+                user_data_RPG[user_id]["current_quest"] = current_quest  # Update quest progress
+                save_data(user_data_RPG)  # Save progress
 
+                if progress == amount:
+                    await ctx.send("You have completed your quest!")
+                else:
+                    await ctx.send(f"{progress} / {amount}")
 
-    # Save user data after the battle ends
+    # Save user data after the battle ends (this will save both health and quest progress)
     save_data(user_data_RPG)
+
+
 
 
 @bot.command()
@@ -502,7 +509,7 @@ async def talk(ctx, npc):
                             if interaction.user == ctx.author:
                                 if quest_button_option == "Yes":
                                     await interaction.response.send_message("Quest accepted!")
-                                    await quest(ctx, "Swamp lurches", 3)
+                                    await quest(ctx, "Swamp lurch", 3)
                                 elif quest_button_option == "No":
                                     await interaction.response.send_message("You have declined the quest.")
                                 # Remove quest buttons after decision
