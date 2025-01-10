@@ -90,6 +90,7 @@ async def on_ready():
     global user_data_RPG
     print(f'Logged in as {bot.user}')
     user_data_RPG = load_data()  # Load user data once at startup
+    print(f'User data loaded: {user_data_RPG}')
 
 
 @bot.command()
@@ -107,7 +108,7 @@ async def initialize(ctx):
             "player_attack": 24,
             "player_energy": 10,
             "max_energy": 10,
-            "current_quest": [],
+            "current_quest": None,  # Use None instead of an empty list
             "progress": 0
         }
 
@@ -200,9 +201,6 @@ async def quest(ctx, enemy, amount):
         save_data(user_data_RPG)
         await ctx.send(f"Kill {amount} {enemy}")
 
-    # Return the quest data for further handling
-    return enemy, amount
-
 
 async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     user_id = str(ctx.author.id)
@@ -231,6 +229,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
             player_health -= enemy_attack
             # Update player health in data during the battle
             user_data_RPG[user_id]['player_health'] = player_health
+            save_data(user_data_RPG)  # Save health data after each hit
             round_message.append(f"The {enemy_name} hits you for {enemy_attack} damage.")
         else:
             round_message.append(f"The {enemy_name} missed.")
@@ -576,16 +575,17 @@ async def stats(ctx):
         enemy = current_quest["enemy"]
         amount = current_quest["amount"]
         progress = current_quest["progress"]
+        await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
+                       f"\nHealth: {user_data_RPG[user_id]['player_health']}"
+                       f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
+                       f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
+                       f"\nQuest: {enemy} {progress} / {amount}")
     else:
-        enemy = "None"
-        amount = 0
-        progress = 0
-
-    await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
-                   f"\nHealth: {user_data_RPG[user_id]['player_health']}"
-                   f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
-                   f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
-                   f"\nQuest: {enemy} {progress} / {amount}")
+        await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
+                       f"\nHealth: {user_data_RPG[user_id]['player_health']}"
+                       f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
+                       f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
+                       f"\nQuest: You don't have any quests.")
 
 
 @bot.event
