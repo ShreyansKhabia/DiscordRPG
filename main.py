@@ -493,7 +493,7 @@ async def talk(ctx, npc):
                                     # Assign a quest to the player (example quest assignment)
                                     save_data(user_data_RPG)
                                     await interaction.response.send_message("Quest accepted!")
-                                    await quest(ctx, "Swamp_lurch".lower(), 3)
+                                    await quest(ctx, "Swamp_lurch", 3)
                                 elif quest_button_option == "No":
                                     await interaction.response.send_message("You have declined the quest.")
                                 # Remove quest buttons after decision
