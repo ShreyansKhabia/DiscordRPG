@@ -6,8 +6,7 @@ import random
 import asyncio
 import json
 from discord.ext import commands
-import discord.ui
-
+from discord.ui import View, Button
 toke_file = open("secret/bot_token.env")
 BOT_TOKEN = toke_file.read()
 
@@ -102,8 +101,7 @@ async def initialize(ctx):
             "player_attack": 24,
             "player_energy": 10,
             "max_energy": 10,
-            "current_room": "town square",
-            "current_dialouge": None
+            "current_quest": []
         }
 
         # Save the updated user data to the file only when new data is added
@@ -238,6 +236,18 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
 
     # Save user data after the battle ends
     save_data(user_data_RPG)
+
+
+# to be finished :D
+async def quest(ctx, enemy, amount):
+    user_data_RPG = load_data()
+
+    quest = user_data_RPG["current_quest"]
+    if quest:
+        await ctx.send("You are already doing a quest!")
+    else:
+        await ctx.send(f"Kill {amount} {enemy}")
+
 
 
 @bot.command()
@@ -451,6 +461,41 @@ async def talk(ctx, npc):
             async def button_callback(interaction, option=option, response=response):  # Capture option and response here
                 if interaction.user == ctx.author:
                     await interaction.response.send_message(response)
+                    # Handle Quest-related dialogue specifically
+                    if option == "Quest":
+                        quest_button_accept = discord.ui.Button(label="Yes", style=discord.ButtonStyle.green)
+                        quest_button_decline = discord.ui.Button(label="No", style=discord.ButtonStyle.red)
+
+                        async def quest_button_callback(interaction, quest_button_option):
+                            if interaction.user == ctx.author:
+                                if quest_button_option == "Yes":
+                                    # Assign a quest to the player (example quest assignment)
+                                    user_data_RPG[interaction.user.id]["current_quest"] = [True]
+                                    save_data(user_data_RPG)
+                                    await interaction.response.send_message("Quest accepted!")
+                                elif quest_button_option == "No":
+                                    await interaction.response.send_message("You have declined the quest.")
+                                # Remove quest buttons after decision
+                                view.clear_items()
+                                await interaction.followup.send("The conversation has ended.")
+                            else:
+                                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+
+                        # Assign the button's callback
+                        quest_button_accept.callback = lambda interaction: quest_button_callback(interaction, "Yes")
+                        quest_button_decline.callback = lambda interaction: quest_button_callback(interaction, "No")
+
+                        # Clear the dialogue options and display the quest decision buttons
+                        view.clear_items()  # Clear previous buttons
+                        view.add_item(quest_button_accept)
+                        view.add_item(quest_button_decline)
+
+                        await ctx.send("Would you like to accept this quest?", view=view)
+
+                    else:
+                        # Other responses not related to quests
+                        view.clear_items()  # Optional: clear previous buttons
+                        await interaction.followup.send("The conversation has ended.")
                 else:
                     await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
@@ -460,9 +505,7 @@ async def talk(ctx, npc):
             # Add the button to the view
             view.add_item(button)
 
-        # Send the message with the buttons
-        await ctx.send("Choose an option:", view=view)
-
+        await ctx.send(f"Talking to {npc}. Please choose an option:", view=view)
     else:
         # Handle the case where the NPC doesn't exist
         await ctx.send("That isn't a valid NPC.")
