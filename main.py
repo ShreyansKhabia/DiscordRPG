@@ -53,11 +53,11 @@ places = {
 biomes = {
     "grassy plains": {
         "enemies": {
-            "Swamp_lurch": {
+            "Swamp lurches": {
                 "enemy_health": 30,
                 "enemy_attack": 13
             },
-            "Feral_cat": {
+            "Feral cats": {
                 "enemy_health": 6,
                 "enemy_attack": 6
             }
@@ -71,8 +71,13 @@ biomes = {
 
 dialouges = {
     "Agrand": {
-        "Quest": "Yes mate, go kill some swamp lurches."
-                 "\nThose bastards have been chewing on my grain for weeks!",
+        "Quest": {
+            "description":
+                "Yes mate, go kill some swamp lurches."
+                "\nThose bastards have been chewing on my grain for weeks!",
+            "enemy": "Swamp lurches",
+            "amount": 3
+        }
         "Help": "You need help you say? Try typing !help to get a list of commands!"
     }
 }
@@ -185,15 +190,14 @@ async def get_place(ctx):
 
 async def quest(ctx, enemy, amount):
     user_data_RPG = load_data()
-
     user_id = str(ctx.author.id)
 
     if user_data_RPG[user_id]["current_quest"]:
         await ctx.send("You are already doing a quest!")
     else:
-        user_data_RPG[user_id]["current_quest"] = [True]
+        user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0}
+        save_data(user_data_RPG)
         await ctx.send(f"Kill {amount} {enemy}")
-        return enemy, amount  # Ensure you're returning the expected data
 
 
 async def fight(ctx, enemy_health, enemy_attack, enemy_name):
@@ -490,10 +494,8 @@ async def talk(ctx, npc):
                         async def quest_button_callback(interaction, quest_button_option):
                             if interaction.user == ctx.author:
                                 if quest_button_option == "Yes":
-                                    # Assign a quest to the player (example quest assignment)
-                                    save_data(user_data_RPG)
                                     await interaction.response.send_message("Quest accepted!")
-                                    await quest(ctx, "Swamp_lurch", 3)
+                                    await quest(ctx, "Swamp lurches", 3)
                                 elif quest_button_option == "No":
                                     await interaction.response.send_message("You have declined the quest.")
                                 # Remove quest buttons after decision
