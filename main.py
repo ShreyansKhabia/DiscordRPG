@@ -505,68 +505,41 @@ async def talk(ctx, npc):
         # Retrieve the dialogue options for the NPC
         npc_dialogue = dialouges[npc]
 
-        # Create a view to hold the buttons
+        # Create a view to hold the buttons for Quest and Help options
         view = discord.ui.View()
 
-        # Create a button for each option in the dialogue
-        for option, response in npc_dialogue.items():
-            button = discord.ui.Button(label=option, style=discord.ButtonStyle.blurple)
+        # Create buttons for Quest and Help
+        quest_button = discord.ui.Button(label="Quest", style=discord.ButtonStyle.blurple)
+        help_button = discord.ui.Button(label="Help", style=discord.ButtonStyle.blurple)
 
-            # Define the callback for each button
-            async def button_callback(interaction, option=option, response=response):  # Capture option and response here
-                if interaction.user == ctx.author:
-                    await interaction.response.send_message(response)
-                    # Handle Quest-related dialogue specifically
-                    if option == "Quest":
-                        current_quest = user_data_RPG[user_id].get("current_quest", None)
-
-                        if current_quest and current_quest["progress"] == current_quest["amount"]:
-                            quest_dialogue = npc_dialogue["Quest"]
-                            await ctx.send(quest_dialogue["clear"])
-                        else:
-                            quest_button_accept = discord.ui.Button(label="Yes", style=discord.ButtonStyle.green)
-                            quest_button_decline = discord.ui.Button(label="No", style=discord.ButtonStyle.red)
-
-                            async def quest_button_callback(interaction, quest_button_option):
-                                if interaction.user == ctx.author:
-                                    if quest_button_option == "Yes":
-                                        quest_info = quest_dialogue["Quest"]
-                                        await interaction.response.send_message("Quest accepted!")
-                                        await quest(ctx, quest_info["enemy"], quest_info["amount"])
-                                    elif quest_button_option == "No":
-                                        await interaction.response.send_message("You have declined the quest.")
-                                    # Remove quest buttons after decision
-                                    view.clear_items()
-                                    await interaction.followup.send("The conversation has ended.")
-                                else:
-                                    await interaction.response.send_message("You cannot click this button!", ephemeral=True)
-
-                            # Assign the button's callback
-                            quest_button_accept.callback = lambda interaction: quest_button_callback(interaction, "Yes")
-                            quest_button_decline.callback = lambda interaction: quest_button_callback(interaction, "No")
-
-                            # Clear the dialogue options and display the quest decision buttons
-                            view.clear_items()  # Clear previous buttons
-                            view.add_item(quest_button_accept)
-                            view.add_item(quest_button_decline)
-
-                            await ctx.send("Would you like to accept this quest?", view=view)
-                    else:
-                        # Other responses not related to quests
-                        view.clear_items()  # Optional: clear previous buttons
-                        await interaction.followup.send("The conversation has ended.")
+        async def quest_button_callback(interaction):
+            if interaction.user == ctx.author:
+                current_quest = user_data_RPG[user_id].get("current_quest", None)
+                if current_quest and current_quest["progress"] == current_quest["amount"]:
+                    await interaction.response.send_message(npc_dialogue["Quest"]["clear"], ephemeral=True)
                 else:
-                    await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+                    quest_info = npc_dialogue["Quest"]
+                    await interaction.response.send_message(quest_info["description"], ephemeral=True)
+                    await quest(ctx, quest_info["enemy"], quest_info["amount"])
+            else:
+                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
-            # Assign the callback to the button
-            button.callback = button_callback
+        async def help_button_callback(interaction):
+            if interaction.user == ctx.author:
+                await interaction.response.send_message(npc_dialogue["Help"], ephemeral=True)
+            else:
+                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
-            # Add the button to the view
-            view.add_item(button)
+        # Assign callbacks to buttons
+        quest_button.callback = quest_button_callback
+        help_button.callback = help_button_callback
+
+        # Add buttons to the view
+        view.add_item(quest_button)
+        view.add_item(help_button)
 
         await ctx.send(f"Talking to {npc}. Please choose an option:", view=view)
     else:
-        # Handle the case where the NPC doesn't exist
         await ctx.send("That isn't a valid NPC.")
 
 @bot.command()
