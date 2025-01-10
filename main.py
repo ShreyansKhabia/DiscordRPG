@@ -7,14 +7,15 @@ import asyncio
 import json
 from discord.ext import commands
 from discord.ui import View, Button
+
 toke_file = open("secret/bot_token.env")
 BOT_TOKEN = toke_file.read()
 
 # File path for storing user data
 DATA_FILE = 'character_id.json'
 
-# Use a dictionary to store user-specific health and score
 
+# Use a dictionary to store user-specific health and score
 
 
 # Helper function to load user data
@@ -57,10 +58,10 @@ biomes = {
                 "enemy_health": 30,
                 "enemy_attack": 13
             },
-#            "Feral cats": {
-#                "enemy_health": 6,
-#                "enemy_attack": 6
-#            }
+            #            "Feral cats": {
+            #                "enemy_health": 6,
+            #                "enemy_attack": 6
+            #            }
         },
         "description": "You stroll through the lucious grassy plains.",
         "look_description": "You are in the grassy fields of the Central Dominance.",
@@ -75,13 +76,13 @@ dialouges = {
             "description":
                 "Yes mate, go kill some swamp lurches."
                 "\nThose bastards have been chewing on my grain for weeks!",
+            "clear": "Thank you for killing those bastards!",
             "enemy": "Swamp lurch",
             "amount": 3
         },
         "Help": "You need help you say? Try typing !help to get a list of commands!"
     }
 }
-
 
 
 # startup
@@ -285,8 +286,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     print("User data after saving at end of fight:", user_data_RPG)
 
 
-
-
 @bot.command()
 async def move(ctx, direction, amount):
     user_id = str(ctx.author.id)
@@ -362,6 +361,13 @@ async def move(ctx, direction, amount):
                     enemy_name, enemy_stats, freq = encounter
                     await ctx.send(f"You encounter a {enemy_name}")
                     await fight(ctx, enemy_stats["enemy_attack"], enemy_stats["enemy_health"], enemy_name)
+
+                    user_data_RPG[user_id]['x'] = x
+                    user_data_RPG[user_id]['y'] = y
+                    user_data_RPG[user_id]['player_energy'] = player_energy
+
+                    # Save the updated user data to the file
+                    save_data(user_data_RPG)
                 else:
                     # Update user data and save it to the file
                     user_data_RPG[user_id]['x'] = x
@@ -491,6 +497,12 @@ async def look(ctx):
 
 @bot.command()
 async def talk(ctx, npc):
+    user_data_RPG = load_data()
+    current_quest = user_data_RPG["current_quest"]
+
+    amount = current_quest["amount"]
+    progress = current_quest["progress"]
+
     # Check if the NPC exists in the dialogues dictionary
     if npc in dialouges:
         # Retrieve the dialogue options for the NPC
@@ -507,38 +519,42 @@ async def talk(ctx, npc):
             button = discord.ui.Button(label=option, style=discord.ButtonStyle.blurple)
 
             # Define the callback for each button
-            async def button_callback(interaction, option=option, response=response):  # Capture option and response here
+            async def button_callback(interaction, option=option,
+                                      response=response):  # Capture option and response here
                 if interaction.user == ctx.author:
                     await interaction.response.send_message(response)
                     # Handle Quest-related dialogue specifically
                     if option == "Quest":
-                        quest_button_accept = discord.ui.Button(label="Yes", style=discord.ButtonStyle.green)
-                        quest_button_decline = discord.ui.Button(label="No", style=discord.ButtonStyle.red)
+                        if progress == amount:
+                            await ctx.send(npc_dialogue["clear"])
+                        else:
+                            quest_button_accept = discord.ui.Button(label="Yes", style=discord.ButtonStyle.green)
+                            quest_button_decline = discord.ui.Button(label="No", style=discord.ButtonStyle.red)
 
-                        async def quest_button_callback(interaction, quest_button_option):
-                            if interaction.user == ctx.author:
-                                if quest_button_option == "Yes":
-                                    await interaction.response.send_message("Quest accepted!")
-                                    await quest(ctx, "Swamp lurch", 3)
-                                elif quest_button_option == "No":
-                                    await interaction.response.send_message("You have declined the quest.")
-                                # Remove quest buttons after decision
-                                view.clear_items()
-                                await interaction.followup.send("The conversation has ended.")
-                            else:
-                                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+                            async def quest_button_callback(interaction, quest_button_option):
+                                if interaction.user == ctx.author:
+                                    if quest_button_option == "Yes":
+                                        await interaction.response.send_message("Quest accepted!")
+                                        await quest(ctx, "Swamp lurch", 3)
+                                    elif quest_button_option == "No":
+                                        await interaction.response.send_message("You have declined the quest.")
+                                    # Remove quest buttons after decision
+                                    view.clear_items()
+                                    await interaction.followup.send("The conversation has ended.")
+                                else:
+                                    await interaction.response.send_message("You cannot click this button!",
+                                                                            ephemeral=True)
 
-                        # Assign the button's callback
-                        quest_button_accept.callback = lambda interaction: quest_button_callback(interaction, "Yes")
-                        quest_button_decline.callback = lambda interaction: quest_button_callback(interaction, "No")
+                            # Assign the button's callback
+                            quest_button_accept.callback = lambda interaction: quest_button_callback(interaction, "Yes")
+                            quest_button_decline.callback = lambda interaction: quest_button_callback(interaction, "No")
 
-                        # Clear the dialogue options and display the quest decision buttons
-                        view.clear_items()  # Clear previous buttons
-                        view.add_item(quest_button_accept)
-                        view.add_item(quest_button_decline)
+                            # Clear the dialogue options and display the quest decision buttons
+                            view.clear_items()  # Clear previous buttons
+                            view.add_item(quest_button_accept)
+                            view.add_item(quest_button_decline)
 
-                        await ctx.send("Would you like to accept this quest?", view=view)
-
+                            await ctx.send("Would you like to accept this quest?", view=view)
                     else:
                         # Other responses not related to quests
                         view.clear_items()  # Optional: clear previous buttons
