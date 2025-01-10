@@ -207,6 +207,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
 
     # Load user data at the start of the fight
     user_data_RPG = load_data()
+    print("Loaded user data at start of fight:", user_data_RPG)
 
     # Get the player's initial health and attack values
     player_health = user_data_RPG[user_id]['player_health']
@@ -279,6 +280,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
 
     # Save user data after the battle ends (this will save both health and quest progress)
     save_data(user_data_RPG)
+    print("User data after saving at end of fight:", user_data_RPG)
 
 
 
@@ -287,8 +289,9 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
 async def move(ctx, direction, amount):
     user_id = str(ctx.author.id)
 
-    # Load user data
+    # Load user data at the start of the move
     user_data_RPG = load_data()
+    print("Loaded user data at start of move:", user_data_RPG)
 
     # Check if the user exists in the data
     if user_id not in user_data_RPG:
@@ -342,6 +345,15 @@ async def move(ctx, direction, amount):
             enemy_name, enemy_stats, freq = encounter
             if place:
                 await ctx.send(place["description"])
+
+                # Update user data and save it to the file
+                user_data_RPG[user_id]['x'] = x
+                user_data_RPG[user_id]['y'] = y
+                user_data_RPG[user_id]['player_energy'] = player_energy
+
+                # Save the updated user data to the file
+                save_data(user_data_RPG)
+                print("User data after saving at end of move:", user_data_RPG)
             else:
                 await ctx.send(biome["description"])
                 if encounter:
@@ -349,18 +361,17 @@ async def move(ctx, direction, amount):
                     await ctx.send(f"You encounter a {enemy_name}")
                     await fight(ctx, enemy_stats["enemy_attack"], enemy_stats["enemy_health"], enemy_name)
                 else:
-                    pass
+                    # Update user data and save it to the file
+                    user_data_RPG[user_id]['x'] = x
+                    user_data_RPG[user_id]['y'] = y
+                    user_data_RPG[user_id]['player_energy'] = player_energy
+
+                    # Save the updated user data to the file
+                    save_data(user_data_RPG)
+                    print("User data after saving at end of move:", user_data_RPG)
 
     else:
         await ctx.send("You are out of energy, try resting!")
-
-    # Update user data and save it to the file
-    user_data_RPG[user_id]['x'] = x
-    user_data_RPG[user_id]['y'] = y
-    user_data_RPG[user_id]['player_energy'] = player_energy
-
-    # Save the updated user data to the file
-    save_data(user_data_RPG)
 
 
 @bot.command()
