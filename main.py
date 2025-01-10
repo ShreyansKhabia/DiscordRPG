@@ -57,10 +57,10 @@ biomes = {
                 "enemy_health": 30,
                 "enemy_attack": 13
             },
-            "Feral cats": {
-                "enemy_health": 6,
-                "enemy_attack": 6
-            }
+#            "Feral cats": {
+#                "enemy_health": 6,
+#                "enemy_attack": 6
+#            }
         },
         "description": "You stroll through the lucious grassy plains.",
         "look_description": "You are in the grassy fields of the Central Dominance.",
@@ -77,10 +77,11 @@ dialouges = {
                 "\nThose bastards have been chewing on my grain for weeks!",
             "enemy": "Swamp lurches",
             "amount": 3
-        }
+        },
         "Help": "You need help you say? Try typing !help to get a list of commands!"
     }
 }
+
 
 
 # startup
@@ -199,6 +200,9 @@ async def quest(ctx, enemy, amount):
         save_data(user_data_RPG)
         await ctx.send(f"Kill {amount} {enemy}")
 
+    # Return the quest data for further handling
+    return enemy, amount
+
 
 async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     user_id = str(ctx.author.id)
@@ -254,16 +258,19 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
 
         await ctx.send(f"The {enemy_name} has been defeated!")
 
-        quest_enemy_name, quest_amount = quest()
-        progress = user_data_RPG[user_id]["progress"]
+        current_quest = user_data_RPG[user_id].get("current_quest", None)
 
-        if enemy_name == quest_enemy_name:
+        enemy = current_quest["enemy"]
+        amount = current_quest["amount"]
+        progress = current_quest["progress"]
+
+        if enemy_name == enemy:
             progress += 1
-            user_data_RPG[user_id]["progress"] = progress
-            if progress == quest_amount:
+            current_quest["progress"] = progress
+            if progress == amount:
                 await ctx.send("You have completed your quest!")
             else:
-                await ctx.send(f"{progress} / {quest_amount}")
+                await ctx.send(f"{progress} / {amount}")
         else:
             pass
 
@@ -551,14 +558,27 @@ async def stats(ctx):
     user_id = str(ctx.author.id)
     user_data_RPG = load_data()
 
+    # Check if user data exists
     if user_id not in user_data_RPG:
         await ctx.send("You need to initialize first with !initialize.")
         return
 
+    # Retrieve quest information from user data
+    current_quest = user_data_RPG[user_id].get("current_quest", None)
+    if current_quest:
+        enemy = current_quest["enemy"]
+        amount = current_quest["amount"]
+        progress = current_quest["progress"]
+    else:
+        enemy = "None"
+        amount = 0
+        progress = 0
+
     await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
                    f"\nHealth: {user_data_RPG[user_id]['player_health']}"
                    f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
-                   f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}")
+                   f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
+                   f"\nQuest: {enemy} {progress} / {amount}")
 
 
 @bot.event
