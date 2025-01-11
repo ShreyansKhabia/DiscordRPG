@@ -60,7 +60,8 @@ biomes = {
             "Swamp lurch": {
                 "enemy_health": 30,
                 "enemy_attack": 13,
-                "enemy_dexterity": 5
+                "enemy_dexterity": 5,
+                "xp": 5
             },
             #            "Feral cats": {
             #                "enemy_health": 6,
@@ -71,7 +72,6 @@ biomes = {
         "look_description": "You are in the grassy fields of the Central Dominance.",
         "freq": 1,
         "area": [-50, 100, -50, 50],
-        "xp": 5
     }
 }
 
@@ -83,7 +83,8 @@ dialouges = {
                 "\nThose bastards have been chewing on my grain for weeks!",
             "clear": "Thank you for killing those bastards!",
             "enemy": "Swamp lurch",
-            "amount": 3
+            "amount": 3,
+            "xp_reward": 50
         },
         "Help": "You need help you say? Try typing !help to get a list of commands!"
     }
@@ -294,7 +295,7 @@ async def quest(ctx, enemy, amount, quest_info):
         await ctx.send(f"Do you want to accept the quest to kill {amount} {enemy}?", view=view)
 
 
-async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, xp):
+async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, enemy_xp):
     user_id = str(ctx.author.id)
 
     # Load user data at the start of the fight
@@ -349,7 +350,17 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, xp
     elif enemy_health <= 0:
         await asyncio.sleep(0.5)
         await ctx.send(f"The {enemy_name} has been defeated!")
-        user_data_RPG[user_id]["xp"] += xp
+        xp = user_data_RPG[user_id]["xp"]
+        threshold = user_data_RPG[user_id]["threshold"]
+
+        xp += enemy_xp
+
+        user_data_RPG[user_id]["xp"] = xp
+
+        if xp >= threshold:
+            await lvl_up(ctx)
+        else:
+            pass
 
         # Handle quest progress
         current_quest = user_data_RPG[user_id].get("current_quest", None)
@@ -365,6 +376,14 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, xp
 
                 if progress == amount:
                     await ctx.send("You have completed your quest!")
+                    xp += enemy_xp
+
+                    user_data_RPG[user_id]["xp"] = xp
+
+                    if xp >= threshold:
+                        await lvl_up(ctx)
+                    else:
+                        pass
                 else:
                     await ctx.send(f"{progress} / {amount}")
 
@@ -441,7 +460,8 @@ async def move(ctx, direction, amount):
                 if encounter:
                     enemy_name, enemy_stats, freq = encounter
                     await ctx.send(f"You encounter a {enemy_name}")
-                    await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"], enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
+                    await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"],
+                                enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
 
                     # Load updated data after the fight
                     user_data_RPG = load_data()
