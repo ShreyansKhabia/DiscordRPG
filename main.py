@@ -24,7 +24,6 @@ def load_data():
     try:
         with open(DATA_FILE, 'r') as f:
             data = json.load(f)
-            print(f"Data loaded: {data}")  # Debug statement
             return data
     except (FileNotFoundError, json.JSONDecodeError):
         print("No existing data found or JSON decode error.")  # Debug statement
@@ -34,7 +33,6 @@ def load_data():
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
-        print(f"Data saved: {data}")  # Debug statement
 
 
 intent = discord.Intents.all()
@@ -213,7 +211,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
 
     # Load user data at the start of the fight
     user_data_RPG = load_data()
-    print("Loaded user data at start of fight:", user_data_RPG)
 
     # Get the player's initial health and attack values
     player_health = user_data_RPG[user_id]['player_health']
@@ -284,7 +281,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     # Save user data after the battle ends (this will save both health and quest progress)
     user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated
     save_data(user_data_RPG)
-    print("User data after saving at end of fight:", user_data_RPG)
 
 
 @bot.command()
@@ -293,7 +289,6 @@ async def move(ctx, direction, amount):
 
     # Load user data at the start of the move
     user_data_RPG = load_data()
-    print("Loaded user data at start of move:", user_data_RPG)
 
     # Check if the user exists in the data
     if user_id not in user_data_RPG:
@@ -351,7 +346,6 @@ async def move(ctx, direction, amount):
                 user_data_RPG[user_id]['y'] = y
                 user_data_RPG[user_id]['player_energy'] = player_energy
                 save_data(user_data_RPG)
-                print("User data after saving at end of move:", user_data_RPG)
             else:
                 await ctx.send(biome["description"])
                 if encounter:
@@ -372,7 +366,6 @@ async def move(ctx, direction, amount):
                     user_data_RPG[user_id]['y'] = y
                     user_data_RPG[user_id]['player_energy'] = player_energy
                     save_data(user_data_RPG)
-                    print("User data after saving at end of move:", user_data_RPG)
     else:
         await ctx.send("You are out of energy, try resting!")
 
@@ -560,7 +553,6 @@ async def help(ctx):
 async def stats(ctx):
     user_id = str(ctx.author.id)
     user_data_RPG = load_data()
-    print("Loaded user data in stats command:", user_data_RPG)
 
     # Check if user data exists
     if user_id not in user_data_RPG:
