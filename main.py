@@ -59,7 +59,8 @@ biomes = {
         "enemies": {
             "Swamp lurch": {
                 "enemy_health": 30,
-                "enemy_attack": 13
+                "enemy_attack": 13,
+                "enemy_dexterity": 5
             },
             #            "Feral cats": {
             #                "enemy_health": 6,
@@ -69,7 +70,8 @@ biomes = {
         "description": "You stroll through the lucious grassy plains.",
         "look_description": "You are in the grassy fields of the Central Dominance.",
         "freq": 1,
-        "area": [-50, 100, -50, 50]
+        "area": [-50, 100, -50, 50],
+        "xp": 5
     }
 }
 
@@ -111,10 +113,13 @@ async def initialize(ctx):
             "max_hp": 100,
             "player_health": 100,
             "player_attack": 20,
+            "player_dexterity": 10,
             "player_energy": 10,
             "max_energy": 10,
             "current_quest": None,  # Use None instead of an empty list
-            "progress": 0
+            "progress": 0,
+            "xp": 0,
+            "threshold": 50
         }
 
         # Save the updated user data to the file only when new data is added
@@ -162,6 +167,7 @@ async def lvl_up(ctx):
     async def dexterity_button_callback(interaction):
         if interaction.user == ctx.author:
             await ctx.send("You have choosen Dexterity")
+            user_data_RPG[user_id]["player_dexterity"] += 5
         else:
             await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
@@ -288,7 +294,7 @@ async def quest(ctx, enemy, amount, quest_info):
         await ctx.send(f"Do you want to accept the quest to kill {amount} {enemy}?", view=view)
 
 
-async def fight(ctx, enemy_health, enemy_attack, enemy_name):
+async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, xp):
     user_id = str(ctx.author.id)
 
     # Load user data at the start of the fight
@@ -297,12 +303,13 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     # Get the player's initial health and attack values
     player_health = user_data_RPG[user_id]['player_health']
     player_attack = user_data_RPG[user_id]['player_attack']
+    player_dexterity = user_data_RPG[user_id]['player_dexterity']
 
     while player_health > 0 and enemy_health > 0:
         round_message = []
 
         # Player's turn (weighted attack roll)
-        player_roll = random.randint(1, player_attack + enemy_attack)
+        player_roll = random.randint(1, player_dexterity + enemy_dexterity)
         if player_roll <= player_attack:
             enemy_health -= player_attack
             round_message.append(f"You hit the {enemy_name} for {player_attack} damage.")
@@ -310,8 +317,8 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
             round_message.append("You missed.")
 
         # Enemy's turn (weighted attack roll)
-        enemy_roll = random.randint(1, player_attack + enemy_attack)
-        if enemy_roll <= enemy_attack:
+        enemy_roll = random.randint(1, player_dexterity + enemy_dexterity)
+        if enemy_roll <= enemy_dexterity:
             player_health -= enemy_attack
             round_message.append(f"The {enemy_name} hits you for {enemy_attack} damage.")
         else:
@@ -342,6 +349,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
     elif enemy_health <= 0:
         await asyncio.sleep(0.5)
         await ctx.send(f"The {enemy_name} has been defeated!")
+        user_data_RPG[user_id]["xp"] += xp
 
         # Handle quest progress
         current_quest = user_data_RPG[user_id].get("current_quest", None)
@@ -433,7 +441,7 @@ async def move(ctx, direction, amount):
                 if encounter:
                     enemy_name, enemy_stats, freq = encounter
                     await ctx.send(f"You encounter a {enemy_name}")
-                    await fight(ctx, enemy_stats["enemy_attack"], enemy_stats["enemy_health"], enemy_name)
+                    await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"], enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
 
                     # Load updated data after the fight
                     user_data_RPG = load_data()
