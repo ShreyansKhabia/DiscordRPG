@@ -105,6 +105,7 @@ async def initialize(ctx):
     if user_id not in user_data_RPG:
         user_data_RPG[user_id] = {
             'x': 0, 'y': 0,
+            "max_hp": 100,
             "player_health": 100,
             "player_attack": 24,
             "player_energy": 10,
@@ -392,6 +393,9 @@ async def rest(ctx, amount):
     player_energy = user_data_RPG[user_id]['player_energy']
     max_energy = user_data_RPG[user_id]["max_energy"]
 
+    player_health = user_data_RPG[user_id]['player_health']
+    max_hp = user_data_RPG[user_id]["max_hp"]
+
     try:
         amount = int(amount)
     except ValueError:
@@ -414,8 +418,8 @@ async def rest(ctx, amount):
 
         # Countdown and update message
         for i in range(amount):
-            if player_energy == max_energy:
-                await ctx.send(f"Your energy is full. Your energy now is {player_energy}")
+            if player_energy == max_energy and player_health == player_energy:
+                await ctx.send(f"Your energy and health is full.")
                 break
 
             # Update remaining time
@@ -425,15 +429,18 @@ async def rest(ctx, amount):
             # Simulate resting by increasing energy
             player_energy = min(player_energy + 1, max_energy)
 
+            player_health = min(player_health + 1, max_hp)
+
             # Save updated energy after each increase
             user_data_RPG[user_id]['player_energy'] = player_energy
+            user_data_RPG[user_id]['player_health'] = player_health
             save_data(user_data_RPG)
 
             # Delay 1 second before the next loop iteration
             await asyncio.sleep(1)
 
         # Final energy status
-        await ctx.send(f"Rest is complete! You now have {player_energy} energy.")
+        await ctx.send(f"Rest is complete! You now have {player_energy} energy and {player_health} HP.")
     else:
         await ctx.send(f"Your max energy is {max_energy}.")
 
@@ -541,6 +548,7 @@ async def talk(ctx, npc):
         await ctx.send(f"Talking to {npc}. Please choose an option:", view=view)
     else:
         await ctx.send("That isn't a valid NPC.")
+
 
 @bot.command()
 async def help(ctx):
