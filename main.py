@@ -19,18 +19,22 @@ DATA_FILE = 'character_id.json'
 
 
 # Helper function to load user data
+# Helper function to load user data
 def load_data():
     try:
         with open(DATA_FILE, 'r') as f:
-            return json.load(f)
+            data = json.load(f)
+            print(f"Data loaded: {data}")  # Debug statement
+            return data
     except (FileNotFoundError, json.JSONDecodeError):
+        print("No existing data found or JSON decode error.")  # Debug statement
         return {}
-
 
 # Helper function to save user data
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
+        print(f"Data saved: {data}")  # Debug statement
 
 
 intent = discord.Intents.all()
@@ -230,8 +234,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
         enemy_roll = random.randint(1, player_attack + enemy_attack)
         if enemy_roll <= enemy_attack:
             player_health -= enemy_attack
-            # Update player health in data during the battle
-            user_data_RPG[user_id]['player_health'] = player_health
             round_message.append(f"The {enemy_name} hits you for {enemy_attack} damage.")
         else:
             round_message.append(f"The {enemy_name} missed.")
@@ -242,6 +244,10 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
 
         # Send round message to the user
         await ctx.send("\n".join(round_message))
+
+        # Save the updated player health after each round
+        user_data_RPG[user_id]['player_health'] = player_health
+        save_data(user_data_RPG)
 
         # Check for defeat
         if player_health <= 0 or enemy_health <= 0:
@@ -256,17 +262,10 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
         user_data_RPG[user_id]['player_health'] = 0  # Ensure health is set to 0 on defeat
     elif enemy_health <= 0:
         await asyncio.sleep(0.5)
-
-        # Update health after battle
-        user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated
-
         await ctx.send(f"The {enemy_name} has been defeated!")
 
         # Handle quest progress
-        user_data_RPG = load_data()
-
         current_quest = user_data_RPG[user_id].get("current_quest", None)
-
         if current_quest:
             enemy = current_quest["enemy"]
             amount = current_quest["amount"]
@@ -283,6 +282,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_name):
                     await ctx.send(f"{progress} / {amount}")
 
     # Save user data after the battle ends (this will save both health and quest progress)
+    user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated
     save_data(user_data_RPG)
     print("User data after saving at end of fight:", user_data_RPG)
 
@@ -339,12 +339,10 @@ async def move(ctx, direction, amount):
             await asyncio.sleep(0.5)
 
             biome = await get_biome(ctx)
-
             place = await get_place(ctx)
 
             # Call get_rand_encounter() and check if it returned a valid result
             encounter = await get_rand_encounter(ctx)
-            enemy_name, enemy_stats, freq = encounter
             if place:
                 await ctx.send(place["description"])
 
@@ -352,8 +350,6 @@ async def move(ctx, direction, amount):
                 user_data_RPG[user_id]['x'] = x
                 user_data_RPG[user_id]['y'] = y
                 user_data_RPG[user_id]['player_energy'] = player_energy
-
-                # Save the updated user data to the file
                 save_data(user_data_RPG)
                 print("User data after saving at end of move:", user_data_RPG)
             else:
@@ -363,25 +359,22 @@ async def move(ctx, direction, amount):
                     await ctx.send(f"You encounter a {enemy_name}")
                     await fight(ctx, enemy_stats["enemy_attack"], enemy_stats["enemy_health"], enemy_name)
 
+                    # Load updated data after the fight
+                    user_data_RPG = load_data()
+
                     user_data_RPG[user_id]['x'] = x
                     user_data_RPG[user_id]['y'] = y
                     user_data_RPG[user_id]['player_energy'] = player_energy
-
-                    # Save the updated user data to the file
                     save_data(user_data_RPG)
                 else:
                     # Update user data and save it to the file
                     user_data_RPG[user_id]['x'] = x
                     user_data_RPG[user_id]['y'] = y
                     user_data_RPG[user_id]['player_energy'] = player_energy
-
-                    # Save the updated user data to the file
                     save_data(user_data_RPG)
                     print("User data after saving at end of move:", user_data_RPG)
-
     else:
         await ctx.send("You are out of energy, try resting!")
-
 
 @bot.command()
 async def rest(ctx, amount):
@@ -426,12 +419,11 @@ async def rest(ctx, amount):
             remaining_time = amount - (i + 1)
             await message.edit(content=f"{remaining_time} seconds remaining.")
 
-            # Simulate resting by increasing energy
+            # Simulate resting by increasing energy and health
             player_energy = min(player_energy + 1, max_energy)
+            player_health = min(player_health + 10, max_hp)
 
-            player_health = min(player_health + 1, max_hp)
-
-            # Save updated energy after each increase
+            # Save updated energy and health after each increase
             user_data_RPG[user_id]['player_energy'] = player_energy
             user_data_RPG[user_id]['player_health'] = player_health
             save_data(user_data_RPG)
@@ -439,7 +431,7 @@ async def rest(ctx, amount):
             # Delay 1 second before the next loop iteration
             await asyncio.sleep(1)
 
-        # Final energy status
+        # Final energy and health status
         await ctx.send(f"Rest is complete! You now have {player_energy} energy and {player_health} HP.")
     else:
         await ctx.send(f"Your max energy is {max_energy}.")
