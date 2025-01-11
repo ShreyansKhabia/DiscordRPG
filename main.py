@@ -61,7 +61,7 @@ biomes = {
                 "enemy_health": 30,
                 "enemy_attack": 13,
                 "enemy_dexterity": 5,
-                "xp": 5
+                "xp": 50
             },
             #            "Feral cats": {
             #                "enemy_health": 6,
@@ -147,38 +147,49 @@ async def lvl_up(ctx):
     # Create buttons for accepting or declining the quest
     view = discord.ui.View()
 
-    strenght_button = discord.ui.Button(label="Strenght", style=discord.ButtonStyle.blurple)
+    strength_button = discord.ui.Button(label="Strength", style=discord.ButtonStyle.blurple)
     health_button = discord.ui.Button(label="Health", style=discord.ButtonStyle.red)
     dexterity_button = discord.ui.Button(label="Dexterity", style=discord.ButtonStyle.green)
 
-    async def strenght_button_callback(interaction):
+    async def strength_button_callback(interaction):
         if interaction.user == ctx.author:
-            await ctx.send("You have choosen Strenght")
-            user_data_RPG[user_id]["max_hp"] += 10
+            await ctx.send("You have chosen Strength")
+            user_data_RPG[user_id]["player_attack"] += 5
+            user_data_RPG[user_id]["xp"] = 0
+            user_data_RPG[user_id]["threshold"] += 50
+            save_data(user_data_RPG)
         else:
             await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
     async def health_button_callback(interaction):
         if interaction.user == ctx.author:
-            await ctx.send("You have choosen Health")
-            user_data_RPG[user_id]["player_attack"] += 5
+            await ctx.send("You have chosen Health")
+            user_data_RPG[user_id]["max_hp"] += 10
+            user_data_RPG[user_id]["xp"] = 0
+            user_data_RPG[user_id]["threshold"] += 50
+            save_data(user_data_RPG)
         else:
             await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
     async def dexterity_button_callback(interaction):
         if interaction.user == ctx.author:
-            await ctx.send("You have choosen Dexterity")
+            await ctx.send("You have chosen Dexterity")
             user_data_RPG[user_id]["player_dexterity"] += 5
+            user_data_RPG[user_id]["xp"] = 0
+            user_data_RPG[user_id]["threshold"] += 50
+            save_data(user_data_RPG)
         else:
             await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
-    strenght_button.callback = strenght_button_callback
+    strength_button.callback = strength_button_callback
     health_button.callback = health_button_callback
     dexterity_button.callback = dexterity_button_callback
 
-    view.add_item(strenght_button)
+    view.add_item(strength_button)
     view.add_item(health_button)
     view.add_item(dexterity_button)
+
+    await ctx.send("Choose an attribute to improve:", view=view)
 
 
 async def get_biome(ctx):
@@ -246,9 +257,9 @@ async def get_place(ctx):
     return None
 
 
-async def accept_quest(ctx, user_id, enemy, amount):
+async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
     user_data_RPG = load_data()
-    user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0}
+    user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0, "xp_reward": xp_reward}
     save_data(user_data_RPG)
     await ctx.send(f"You have accepted the quest to kill {amount} {enemy}")
 
@@ -258,7 +269,6 @@ async def decline_quest(ctx):
     await ctx.send("You have declined the quest.")
 
 
-@bot.command()
 async def quest(ctx, enemy, amount, quest_info):
     user_id = str(ctx.author.id)
 
@@ -275,7 +285,7 @@ async def quest(ctx, enemy, amount, quest_info):
 
         async def accept_button_callback(interaction):
             if interaction.user == ctx.author:
-                await accept_quest(ctx, user_id, enemy, amount)
+                await accept_quest(ctx, user_id, enemy, amount, quest_info["xp_reward"])
             else:
                 await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
@@ -293,6 +303,24 @@ async def quest(ctx, enemy, amount, quest_info):
 
         await ctx.send(quest_info["description"], ephemeral=True)
         await ctx.send(f"Do you want to accept the quest to kill {amount} {enemy}?", view=view)
+
+
+async def complete_quest(ctx, user_id, xp_reward):
+    user_data_RPG = load_data()
+    xp = user_data_RPG[user_id]["xp"]
+    threshold = user_data_RPG[user_id]["threshold"]
+
+    xp += xp_reward
+
+    user_data_RPG[user_id]["xp"] = xp
+
+    if xp >= threshold:
+        await lvl_up(ctx)
+
+    user_data_RPG[user_id]["current_quest"] = None  # Clear current quest
+    save_data(user_data_RPG)
+
+    await ctx.send(f"You have completed your quest and earned {xp_reward} XP!")
 
 
 async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, enemy_xp):
@@ -375,15 +403,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
                 user_data_RPG[user_id]["current_quest"] = current_quest  # Update quest progress
 
                 if progress == amount:
-                    await ctx.send("You have completed your quest!")
-                    xp += enemy_xp
-
-                    user_data_RPG[user_id]["xp"] = xp
-
-                    if xp >= threshold:
-                        await lvl_up(ctx)
-                    else:
-                        pass
+                    await complete_quest(ctx, user_id, current_quest["xp_reward"])
                 else:
                     await ctx.send(f"{progress} / {amount}")
 
@@ -678,12 +698,14 @@ async def stats(ctx):
         await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
                        f"\nHealth: {user_data_RPG[user_id]['player_health']}"
                        f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
+                       f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
                        f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
                        f"\nQuest: {enemy} {progress} / {amount}")
     else:
         await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
                        f"\nHealth: {user_data_RPG[user_id]['player_health']}"
                        f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
+                       f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
                        f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
                        f"\nQuest: You don't have any quests.")
 
