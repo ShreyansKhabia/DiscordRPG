@@ -1,1 +1,1 @@
-{"1090641709257457764": {"x": 0, "y": 0, "max_hp": 100, "player_health": 100, "player_attack": 24, "player_energy": 9, "max_energy": 10, "current_quest": {"enemy": "Swamp lurch", "amount": 3, "progress": 3}, "progress": 0}}
+{"1090641709257457764": {"x": 0, "y": 0, "max_hp": 100, "player_health": 100, "player_attack": 20, "player_energy": 10, "max_energy": 10, "current_quest": {"enemy": "Swamp lurch", "amount": 3, "progress": 0}, "progress": 0}}

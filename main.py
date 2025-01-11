@@ -29,6 +29,7 @@ def load_data():
         print("No existing data found or JSON decode error.")  # Debug statement
         return {}
 
+
 # Helper function to save user data
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
@@ -109,7 +110,7 @@ async def initialize(ctx):
             'x': 0, 'y': 0,
             "max_hp": 100,
             "player_health": 100,
-            "player_attack": 24,
+            "player_attack": 20,
             "player_energy": 10,
             "max_energy": 10,
             "current_quest": None,  # Use None instead of an empty list
@@ -127,6 +128,50 @@ async def initialize(ctx):
 @bot.command()
 async def ping(ctx):
     await ctx.send("pong")
+
+
+async def lvl_up(ctx):
+    user_id = str(ctx.author.id)
+
+    user_data_RPG = load_data()
+
+    await ctx.send("You leveled up!")
+    await ctx.send("Please choose an option!")
+
+    # Create buttons for accepting or declining the quest
+    view = discord.ui.View()
+
+    strenght_button = discord.ui.Button(label="Strenght", style=discord.ButtonStyle.blurple)
+    health_button = discord.ui.Button(label="Health", style=discord.ButtonStyle.red)
+    dexterity_button = discord.ui.Button(label="Dexterity", style=discord.ButtonStyle.green)
+
+    async def strenght_button_callback(interaction):
+        if interaction.user == ctx.author:
+            await ctx.send("You have choosen Strenght")
+            user_data_RPG[user_id]["max_hp"] += 10
+        else:
+            await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+
+    async def health_button_callback(interaction):
+        if interaction.user == ctx.author:
+            await ctx.send("You have choosen Health")
+            user_data_RPG[user_id]["player_attack"] += 5
+        else:
+            await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+
+    async def dexterity_button_callback(interaction):
+        if interaction.user == ctx.author:
+            await ctx.send("You have choosen Dexterity")
+        else:
+            await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+
+    strenght_button.callback = strenght_button_callback
+    health_button.callback = health_button_callback
+    dexterity_button.callback = dexterity_button_callback
+
+    view.add_item(strenght_button)
+    view.add_item(health_button)
+    view.add_item(dexterity_button)
 
 
 async def get_biome(ctx):
@@ -194,16 +239,53 @@ async def get_place(ctx):
     return None
 
 
-async def quest(ctx, enemy, amount):
+async def accept_quest(ctx, user_id, enemy, amount):
     user_data_RPG = load_data()
+    user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0}
+    save_data(user_data_RPG)
+    await ctx.send(f"You have accepted the quest to kill {amount} {enemy}")
+
+
+# Function to handle declining a quest
+async def decline_quest(ctx):
+    await ctx.send("You have declined the quest.")
+
+
+@bot.command()
+async def quest(ctx, enemy, amount, quest_info):
     user_id = str(ctx.author.id)
+
+    user_data_RPG = load_data()
 
     if user_data_RPG[user_id]["current_quest"]:
         await ctx.send("You are already doing a quest!")
     else:
-        user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0}
-        save_data(user_data_RPG)
-        await ctx.send(f"Kill {amount} {enemy}")
+        # Create buttons for accepting or declining the quest
+        view = discord.ui.View()
+
+        accept_button = discord.ui.Button(label="Yes", style=discord.ButtonStyle.green)
+        decline_button = discord.ui.Button(label="No", style=discord.ButtonStyle.red)
+
+        async def accept_button_callback(interaction):
+            if interaction.user == ctx.author:
+                await accept_quest(ctx, user_id, enemy, amount)
+            else:
+                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+
+        async def decline_button_callback(interaction):
+            if interaction.user == ctx.author:
+                await decline_quest(ctx)
+            else:
+                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+
+        accept_button.callback = accept_button_callback
+        decline_button.callback = decline_button_callback
+
+        view.add_item(accept_button)
+        view.add_item(decline_button)
+
+        await ctx.send(quest_info["description"], ephemeral=True)
+        await ctx.send(f"Do you want to accept the quest to kill {amount} {enemy}?", view=view)
 
 
 async def fight(ctx, enemy_health, enemy_attack, enemy_name):
@@ -369,6 +451,7 @@ async def move(ctx, direction, amount):
     else:
         await ctx.send("You are out of energy, try resting!")
 
+
 @bot.command()
 async def rest(ctx, amount):
     user_id = str(ctx.author.id)
@@ -513,8 +596,7 @@ async def talk(ctx, npc):
                     await interaction.response.send_message(npc_dialogue["Quest"]["clear"], ephemeral=True)
                 else:
                     quest_info = npc_dialogue["Quest"]
-                    await interaction.response.send_message(quest_info["description"], ephemeral=True)
-                    await quest(ctx, quest_info["enemy"], quest_info["amount"])
+                    await quest(ctx, quest_info["enemy"], quest_info["amount"], quest_info)
             else:
                 await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
