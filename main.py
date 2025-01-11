@@ -696,14 +696,14 @@ async def stats(ctx):
         amount = current_quest["amount"]
         progress = current_quest["progress"]
         await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
-                       f"\nHealth: {user_data_RPG[user_id]['player_health']}"
+                       f"\nHealth: {user_data_RPG[user_id]['player_health']} / {user_data_RPG[user_id]['max_hp']}"
                        f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
                        f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
                        f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
                        f"\nQuest: {enemy} {progress} / {amount}")
     else:
         await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
-                       f"\nHealth: {user_data_RPG[user_id]['player_health']}"
+                       f"\nHealth: {user_data_RPG[user_id]['player_health']} / {user_data_RPG[user_id]['max_hp']}"
                        f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
                        f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
                        f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
