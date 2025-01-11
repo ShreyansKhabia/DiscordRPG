@@ -399,42 +399,44 @@ async def rest(ctx, amount):
         await ctx.send(f"You need to rest for a positive number of seconds.")
         return
 
-    # Prevent energy from exceeding max_energy
-    amount = min(amount, max_energy - player_energy)
+    # If both health and energy are full, notify the user
+    if player_energy == max_energy and player_health == max_hp:
+        await ctx.send(f"Your energy and health are already full.")
+        return
 
-    if amount > 0:
-        await ctx.send(f"You sit down to rest for {amount} seconds.")
+    await ctx.send(f"You sit down to rest for {amount} seconds.")
 
-        # Send the initial message
-        message = await ctx.send(f"{amount} seconds remaining")
-        await asyncio.sleep(1)
+    # Send the initial message
+    message = await ctx.send(f"{amount} seconds remaining")
+    await asyncio.sleep(1)
 
-        # Countdown and update message
-        for i in range(amount):
-            if player_energy == max_energy and player_health == player_energy:
-                await ctx.send(f"Your energy and health is full.")
-                break
+    # Countdown and update message
+    for i in range(amount):
+        # Update remaining time
+        remaining_time = amount - (i + 1)
+        await message.edit(content=f"{remaining_time} seconds remaining.")
 
-            # Update remaining time
-            remaining_time = amount - (i + 1)
-            await message.edit(content=f"{remaining_time} seconds remaining.")
-
-            # Simulate resting by increasing energy and health
+        # Simulate resting by increasing energy and health
+        if player_energy < max_energy:
             player_energy = min(player_energy + 1, max_energy)
+        if player_health < max_hp:
             player_health = min(player_health + 10, max_hp)
 
-            # Save updated energy and health after each increase
-            user_data_RPG[user_id]['player_energy'] = player_energy
-            user_data_RPG[user_id]['player_health'] = player_health
-            save_data(user_data_RPG)
+        # Save updated energy and health after each increase
+        user_data_RPG[user_id]['player_energy'] = player_energy
+        user_data_RPG[user_id]['player_health'] = player_health
+        save_data(user_data_RPG)
 
-            # Delay 1 second before the next loop iteration
-            await asyncio.sleep(1)
+        # If both energy and health are full, break the loop
+        if player_energy == max_energy and player_health == max_hp:
+            await ctx.send(f"Your energy and health are now full.")
+            break
 
-        # Final energy and health status
-        await ctx.send(f"Rest is complete! You now have {player_energy} energy and {player_health} HP.")
-    else:
-        await ctx.send(f"Your max energy is {max_energy}.")
+        # Delay 1 second before the next loop iteration
+        await asyncio.sleep(1)
+
+    # Final energy and health status
+    await ctx.send(f"Rest is complete! You now have {player_energy} energy and {player_health} HP.")
 
 
 @bot.command()
