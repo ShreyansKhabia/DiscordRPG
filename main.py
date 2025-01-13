@@ -618,6 +618,12 @@ async def look(ctx):
         else:
             await ctx.send("You are in an unknown area, and there is no information available.")
 
+    other_players = [user for user in user_data_RPG if user != user_id and user_data_RPG[user]['x'] == x and user_data_RPG[user]['y'] == y]
+    if other_players:
+        await ctx.send(f"Players here: {', '.join(other_players)}")
+    else:
+        await ctx.send("There are no other players here.")
+
 
 @bot.command()
 async def talk(ctx, npc):
