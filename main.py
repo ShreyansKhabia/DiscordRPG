@@ -163,55 +163,43 @@ async def ping(ctx):
 async def lvl_up(ctx):
     try:
         user_id = str(ctx.author.id)
-
         user_data_RPG = load_data()
 
         await ctx.send("You leveled up!")
         await ctx.send("Please choose an option!")
 
-        # Create buttons for accepting or declining the quest
         view = discord.ui.View()
 
         strength_button = discord.ui.Button(label="Strength", style=discord.ButtonStyle.blurple)
         health_button = discord.ui.Button(label="Health", style=discord.ButtonStyle.red)
         dexterity_button = discord.ui.Button(label="Dexterity", style=discord.ButtonStyle.green)
 
-        async def strength_button_callback(interaction):
+        async def button_callback(interaction, attribute):
             if interaction.user == ctx.author:
-                await ctx.send("You have chosen Strength")
-                user_data_RPG[user_id]["player_attack"] += 5
+                if attribute == "Strength":
+                    await ctx.send("You have chosen Strength")
+                    user_data_RPG[user_id]["player_attack"] += 5
+                elif attribute == "Health":
+                    await ctx.send("You have chosen Health")
+                    user_data_RPG[user_id]["max_hp"] += 10
+                elif attribute == "Dexterity":
+                    await ctx.send("You have chosen Dexterity")
+                    user_data_RPG[user_id]["player_dexterity"] += 5
+
                 user_data_RPG[user_id]["xp"] = 0
                 user_data_RPG[user_id]["threshold"] += 50
-                view.clear_items()
                 save_data(user_data_RPG)
+
+                # Clear or disable the buttons to prevent further clicks
+                for item in view.children:
+                    item.disabled = True
+                await interaction.response.edit_message(view=view)
             else:
                 await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
-        async def health_button_callback(interaction):
-            if interaction.user == ctx.author:
-                await ctx.send("You have chosen Health")
-                user_data_RPG[user_id]["max_hp"] += 10
-                user_data_RPG[user_id]["xp"] = 0
-                user_data_RPG[user_id]["threshold"] += 50
-                view.clear_items()
-                save_data(user_data_RPG)
-            else:
-                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
-
-        async def dexterity_button_callback(interaction):
-            if interaction.user == ctx.author:
-                await ctx.send("You have chosen Dexterity")
-                user_data_RPG[user_id]["player_dexterity"] += 5
-                user_data_RPG[user_id]["xp"] = 0
-                user_data_RPG[user_id]["threshold"] += 50
-                view.clear_items()
-                save_data(user_data_RPG)
-            else:
-                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
-
-        strength_button.callback = strength_button_callback
-        health_button.callback = health_button_callback
-        dexterity_button.callback = dexterity_button_callback
+        strength_button.callback = lambda interaction: button_callback(interaction, "Strength")
+        health_button.callback = lambda interaction: button_callback(interaction, "Health")
+        dexterity_button.callback = lambda interaction: button_callback(interaction, "Dexterity")
 
         view.add_item(strength_button)
         view.add_item(health_button)
@@ -219,8 +207,8 @@ async def lvl_up(ctx):
 
         await ctx.send("Choose an attribute to improve:", view=view)
     except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
-        logger.error(f"Error in move command: {e}")
+        await ctx.send("An error occurred while leveling up. Please try again later.")
+        logger.error(f"Error in lvl_up function: {e}")
 
 
 async def get_biome(ctx):
@@ -522,38 +510,25 @@ async def move(ctx, direction, amount):
                 await ctx.send(f"Your coordinates are now {x}, {y}. Remaining energy: {player_energy}")
                 await asyncio.sleep(0.5)
 
-                biome = await get_biome(ctx)
                 place = await get_place(ctx)
-
-                # Call get_rand_encounter() and check if it returned a valid result
-                encounter = await get_rand_encounter(ctx)
                 if place:
                     await ctx.send(place["description"])
-
-                    # Update user data and save it to the file
-                    user_data_RPG[user_id]['x'] = x
-                    user_data_RPG[user_id]['y'] = y
-                    user_data_RPG[user_id]['player_energy'] = player_energy
-                    save_data(user_data_RPG)
                 else:
-                    await ctx.send(biome["description"])
-                    if encounter:
-                        enemy_name, enemy_stats, freq = encounter
-                        await ctx.send(f"You encounter a {enemy_name}")
-                        await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"],
-                                    enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
+                    biome = await get_biome(ctx)
+                    if biome:
+                        await ctx.send(biome["description"])
+                        encounter = await get_rand_encounter(ctx)
+                        if encounter:
+                            enemy_name, enemy_stats, freq = encounter
+                            await ctx.send(f"You encounter a {enemy_name}")
+                            await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"],
+                                        enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
 
-                        user_data_RPG = load_data()
-
-                        user_data_RPG[user_id]['x'] = x
-                        user_data_RPG[user_id]['y'] = y
-                        user_data_RPG[user_id]['player_energy'] = player_energy
-                        save_data(user_data_RPG)
-                    else:
-                        user_data_RPG[user_id]['x'] = x
-                        user_data_RPG[user_id]['y'] = y
-                        user_data_RPG[user_id]['player_energy'] = player_energy
-                        save_data(user_data_RPG)
+                # Update user data and save it to the file
+                user_data_RPG[user_id]['x'] = x
+                user_data_RPG[user_id]['y'] = y
+                user_data_RPG[user_id]['player_energy'] = player_energy
+                save_data(user_data_RPG)
         else:
             await ctx.send("You are out of energy, try resting!")
     except Exception as e:
