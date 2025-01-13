@@ -1,15 +1,13 @@
 # Git is working!!!
 # hell yeah
 
-import discord
+import interactions
 import random
 import asyncio
 import json
-from discord.ext import commands
-import interactions
 import logging
 
-from interactions import SlashCommand
+from interactions import Client, SlashCommand, SlashContext
 
 toke_file = open("secret/bot_token.env")
 BOT_TOKEN = toke_file.read()
@@ -22,6 +20,7 @@ logger.setLevel(logging.ERROR)
 handler = logging.FileHandler(filename='discord_errors.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
 
 # Helper function to load user data
 def load_data():
@@ -40,10 +39,7 @@ def save_data(data):
         json.dump(data, f)
 
 
-intent = discord.Intents.all()
-bot = commands.Bot(command_prefix="!", intents=intent, help_command=None)
-
-slash = SlashCommand(bot, sync_commands=True)
+bot = Client(token=BOT_TOKEN)
 
 
 # Global error handler for commands
@@ -115,24 +111,39 @@ dialouges = {
 }
 
 
-# startup
+# Helper function to load user data
+def load_data():
+    try:
+        with open(DATA_FILE, 'r') as f:
+            data = json.load(f)
+            return data
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("No existing data found or JSON decode error.")
+        return {}
+
+
+# Helper function to save user data
+def save_data(data):
+    with open(DATA_FILE, 'w') as f:
+        json.dump(data, f)
+
+
+bot = Client(token=BOT_TOKEN)
+
+
 @bot.event
 async def on_ready():
     global user_data_RPG
     print(f'Logged in as {bot.user}')
-    user_data_RPG = load_data()  # Load user data once at startup
+    user_data_RPG = load_data()
     print(f'User data loaded: {user_data_RPG}')
 
 
-@bot.command()
-async def initialize(ctx):
+@bot.slash_command(name="initialize", description="Initialize the bot for a user")
+async def initialize(ctx: SlashContext):
     try:
         user_id = str(ctx.author.id)
-
-        # Load the user data from the file
         user_data_RPG = load_data()
-
-        # Initialize user data if not already done
         if user_id not in user_data_RPG:
             user_data_RPG[user_id] = {
                 'x': 0, 'y': 0,
@@ -147,10 +158,7 @@ async def initialize(ctx):
                 "xp": 0,
                 "threshold": 50
             }
-
-            # Save the updated user data to the file only when new data is added
             save_data(user_data_RPG)
-
             await ctx.send("Bot initialized")
         else:
             await ctx.send("You are already initialized!")
@@ -159,8 +167,8 @@ async def initialize(ctx):
         logger.error(f"Error in initialize command: {e}")
 
 
-@bot.command()
-async def ping(ctx):
+@bot.slash_command(name="ping", description="Ping the bot")
+async def ping(ctx: SlashContext):
     await ctx.send("pong")
 
 
@@ -295,7 +303,8 @@ async def get_place(ctx):
 async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
     try:
         user_data_RPG = load_data()
-        user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0, "xp_reward": xp_reward}
+        user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0,
+                                                   "xp_reward": xp_reward}
         save_data(user_data_RPG)
         await ctx.send(f"You have accepted the quest to kill {amount} {enemy}")
     except Exception as e:
