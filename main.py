@@ -6,7 +6,10 @@ import random
 import asyncio
 import json
 from discord.ext import commands
+import interactions
 import logging
+
+from interactions import SlashCommand
 
 toke_file = open("secret/bot_token.env")
 BOT_TOKEN = toke_file.read()
@@ -19,7 +22,6 @@ logger.setLevel(logging.ERROR)
 handler = logging.FileHandler(filename='discord_errors.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
-
 
 # Helper function to load user data
 def load_data():
@@ -40,6 +42,8 @@ def save_data(data):
 
 intent = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intent, help_command=None)
+
+slash = SlashCommand(bot, sync_commands=True)
 
 
 # Global error handler for commands
