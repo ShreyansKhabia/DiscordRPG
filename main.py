@@ -182,6 +182,7 @@ async def lvl_up(ctx):
                 user_data_RPG[user_id]["player_attack"] += 5
                 user_data_RPG[user_id]["xp"] = 0
                 user_data_RPG[user_id]["threshold"] += 50
+                view.clear_items()
                 save_data(user_data_RPG)
             else:
                 await interaction.response.send_message("You cannot click this button!", ephemeral=True)
@@ -192,6 +193,7 @@ async def lvl_up(ctx):
                 user_data_RPG[user_id]["max_hp"] += 10
                 user_data_RPG[user_id]["xp"] = 0
                 user_data_RPG[user_id]["threshold"] += 50
+                view.clear_items()
                 save_data(user_data_RPG)
             else:
                 await interaction.response.send_message("You cannot click this button!", ephemeral=True)
@@ -202,6 +204,7 @@ async def lvl_up(ctx):
                 user_data_RPG[user_id]["player_dexterity"] += 5
                 user_data_RPG[user_id]["xp"] = 0
                 user_data_RPG[user_id]["threshold"] += 50
+                view.clear_items()
                 save_data(user_data_RPG)
             else:
                 await interaction.response.send_message("You cannot click this button!", ephemeral=True)
@@ -453,7 +456,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
             amount = current_quest["amount"]
             progress = current_quest["progress"]
 
-            if enemy_name == enemy:
+            if enemy_name == enemy and progress < amount:
                 progress += 1
                 current_quest["progress"] = progress
                 user_data_RPG[user_id]["current_quest"] = current_quest  # Update quest progress
