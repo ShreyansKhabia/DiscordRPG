@@ -1,13 +1,10 @@
-# Git is working!!!
-# hell yeah
-
 import interactions
 import random
 import asyncio
 import json
 import logging
 
-from interactions import Client, SlashCommand, SlashContext
+from interactions import Client, SlashContext, slash_command
 
 toke_file = open("secret/bot_token.env")
 BOT_TOKEN = toke_file.read()
@@ -21,7 +18,6 @@ handler = logging.FileHandler(filename='discord_errors.log', encoding='utf-8', m
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-
 # Helper function to load user data
 def load_data():
     try:
@@ -29,35 +25,37 @@ def load_data():
             data = json.load(f)
             return data
     except (FileNotFoundError, json.JSONDecodeError):
-        print("No existing data found or JSON decode error.")  # Debug statement
+        print("No existing data found or JSON decode error.")
         return {}
-
 
 # Helper function to save user data
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
 
-
 bot = Client(token=BOT_TOKEN)
 
+@bot.event
+async def on_ready():
+    global user_data_RPG
+    print(f'Logged in as {bot.user}')
+    user_data_RPG = load_data()
+    print(f'User data loaded: {user_data_RPG}')
 
-# Global error handler for commands
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
-        await ctx.send("This command does not exist. Please use !help to see the list of available commands.")
-    elif isinstance(error, commands.MissingRequiredArgument):
+    if isinstance(error, interactions.errors.CommandNotFound):
+        await ctx.send("This command does not exist. Please use /help to see the list of available commands.")
+    elif isinstance(error, interactions.errors.MissingRequiredArgument):
         await ctx.send("You are missing required arguments for this command.")
-    elif isinstance(error, commands.BadArgument):
+    elif isinstance(error, interactions.errors.BadArgument):
         await ctx.send("One of your arguments is invalid.")
-    elif isinstance(error, commands.CommandInvokeError):
+    elif isinstance(error, interactions.errors.CommandInvokeError):
         await ctx.send("There was an error while executing the command. Please try again later.")
         logger.error(f"Error in command '{ctx.command}': {error}")
     else:
         await ctx.send("An unexpected error occurred. Please try again later.")
         logger.error(f"Unexpected error: {error}")
-
 
 places = {
     "kingdoms": {
@@ -83,10 +81,6 @@ biomes = {
                 "enemy_dexterity": 5,
                 "xp": 50
             },
-            #            "Feral cats": {
-            #                "enemy_health": 6,
-            #                "enemy_attack": 6
-            #            }
         },
         "description": "You stroll through the lucious grassy plains.",
         "look_description": "You are in the grassy fields of the Central Dominance.",
@@ -106,40 +100,11 @@ dialouges = {
             "amount": 3,
             "xp_reward": 50
         },
-        "Help": "You need help you say? Try typing !help to get a list of commands!"
+        "Help": "You need help you say? Try typing /help to get a list of commands!"
     }
 }
 
-
-# Helper function to load user data
-def load_data():
-    try:
-        with open(DATA_FILE, 'r') as f:
-            data = json.load(f)
-            return data
-    except (FileNotFoundError, json.JSONDecodeError):
-        print("No existing data found or JSON decode error.")
-        return {}
-
-
-# Helper function to save user data
-def save_data(data):
-    with open(DATA_FILE, 'w') as f:
-        json.dump(data, f)
-
-
-bot = Client(token=BOT_TOKEN)
-
-
-@bot.event
-async def on_ready():
-    global user_data_RPG
-    print(f'Logged in as {bot.user}')
-    user_data_RPG = load_data()
-    print(f'User data loaded: {user_data_RPG}')
-
-
-@bot.slash_command(name="initialize", description="Initialize the bot for a user")
+@slash_command(name="initialize", description="Initialize the bot for a user")
 async def initialize(ctx: SlashContext):
     try:
         user_id = str(ctx.author.id)
@@ -166,11 +131,9 @@ async def initialize(ctx: SlashContext):
         await ctx.send("An error occurred during initialization. Please try again later.")
         logger.error(f"Error in initialize command: {e}")
 
-
-@bot.slash_command(name="ping", description="Ping the bot")
+@slash_command(name="ping", description="Ping the bot")
 async def ping(ctx: SlashContext):
     await ctx.send("pong")
-
 
 async def lvl_up(ctx):
     try:
@@ -180,11 +143,11 @@ async def lvl_up(ctx):
         await ctx.send("You leveled up!")
         await ctx.send("Please choose an option!")
 
-        view = discord.ui.View()
+        view = interactions.ui.View()
 
-        strength_button = discord.ui.Button(label="Strength", style=discord.ButtonStyle.blurple)
-        health_button = discord.ui.Button(label="Health", style=discord.ButtonStyle.red)
-        dexterity_button = discord.ui.Button(label="Dexterity", style=discord.ButtonStyle.green)
+        strength_button = interactions.ui.Button(label="Strength", style=interactions.ButtonStyle.blurple)
+        health_button = interactions.ui.Button(label="Health", style=interactions.ButtonStyle.red)
+        dexterity_button = interactions.ui.Button(label="Dexterity", style=interactions.ButtonStyle.green)
 
         async def button_callback(interaction, attribute):
             if interaction.user == ctx.author:
@@ -202,7 +165,6 @@ async def lvl_up(ctx):
                 user_data_RPG[user_id]["threshold"] += 50
                 save_data(user_data_RPG)
 
-                # Clear or disable the buttons to prevent further clicks
                 for item in view.children:
                     item.disabled = True
                 await interaction.response.edit_message(view=view)
@@ -222,7 +184,6 @@ async def lvl_up(ctx):
         await ctx.send("An error occurred while leveling up. Please try again later.")
         logger.error(f"Error in lvl_up function: {e}")
 
-
 async def get_biome(ctx):
     try:
         user_id = str(ctx.author.id)
@@ -231,35 +192,26 @@ async def get_biome(ctx):
         x = user_data[user_id]["x"]
         y = user_data[user_id]["y"]
 
-        # Corrected biome check logic
-        # Return biome if coordinates fall within its area
         for biome_name, biome_data in biomes.items():
             biome_area = biome_data["area"]
             if biome_area[0] <= x <= biome_area[1] and biome_area[2] <= y <= biome_area[3]:
                 return biome_data
 
-        # Return None if the coordinates don't match any biome
         return None
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
 
-
 async def get_rand_encounter(ctx):
     try:
         biome = await get_biome(ctx)
 
-        # If a biome is returned, choose a random enemy
         if biome:
-            # Get a random enemy from the biome (choose a random key)
             enemy_name = random.choice(list(biome["enemies"].keys()))
-
-            # Retrieve the enemy stats (attack and health)
             enemy_stats = biome["enemies"][enemy_name]
 
             freq = random.randint(1, biome["freq"])
 
-            # Return the enemy name and its stats
             if freq == 1:
                 return enemy_name, enemy_stats, freq
             else:
@@ -267,7 +219,6 @@ async def get_rand_encounter(ctx):
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
-
 
 async def get_place(ctx):
     try:
@@ -277,28 +228,22 @@ async def get_place(ctx):
         x = user_data[user_id]['x']
         y = user_data[user_id]['y']
 
-        # Iterate through each kingdom, city, and region to find the correct place based on coordinates
         for kingdom_name, kingdom_data in places.items():
             for city_name, city_data in kingdom_data.items():
                 for region_name, region_data in city_data.items():
                     for region_key, region_info in region_data.items():
-                        # Safeguard for missing "cords" key
                         if "cords" not in region_info:
-                            continue  # Skip this region if it doesn't have "cords"
+                            continue
 
                         cords = region_info["cords"]
 
-                        # Check if the coordinates match the current region
                         if cords == [x, y]:
-                            # Return the region details if coordinates match
                             return region_info
 
-        # If no region with matching coordinates is found, return None (or handle as needed)
         return None
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
-
 
 async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
     try:
@@ -311,11 +256,8 @@ async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
 
-
-# Function to handle declining a quest
 async def decline_quest(ctx):
     await ctx.send("You have declined the quest.")
-
 
 async def quest(ctx, enemy, amount, quest_info):
     try:
@@ -326,11 +268,10 @@ async def quest(ctx, enemy, amount, quest_info):
         if user_data_RPG[user_id]["current_quest"]:
             await ctx.send("You are already doing a quest!")
         else:
-            # Create buttons for accepting or declining the quest
-            view = discord.ui.View()
+            view = interactions.ui.View()
 
-            accept_button = discord.ui.Button(label="Yes", style=discord.ButtonStyle.green)
-            decline_button = discord.ui.Button(label="No", style=discord.ButtonStyle.red)
+            accept_button = interactions.ui.Button(label="Yes", style=interactions.ButtonStyle.green)
+            decline_button = interactions.ui.Button(label="No", style=interactions.ButtonStyle.red)
 
             async def accept_button_callback(interaction):
                 if interaction.user == ctx.author:
@@ -356,7 +297,6 @@ async def quest(ctx, enemy, amount, quest_info):
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
 
-
 async def complete_quest(ctx, user_id, xp_reward):
     try:
         user_data_RPG = load_data()
@@ -370,7 +310,7 @@ async def complete_quest(ctx, user_id, xp_reward):
         if xp >= threshold:
             await lvl_up(ctx)
 
-        user_data_RPG[user_id]["current_quest"] = None  # Clear current quest
+        user_data_RPG[user_id]["current_quest"] = None
         save_data(user_data_RPG)
 
         await ctx.send(f"You have completed your quest and earned {xp_reward} XP!")
@@ -378,15 +318,12 @@ async def complete_quest(ctx, user_id, xp_reward):
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
 
-
 async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, enemy_xp):
     try:
         user_id = str(ctx.author.id)
 
-        # Load user data at the start of the fight
         user_data_RPG = load_data()
 
-        # Get the player's initial health and attack values
         player_health = user_data_RPG[user_id]['player_health']
         player_attack = user_data_RPG[user_id]['player_attack']
         player_dexterity = user_data_RPG[user_id]['player_dexterity']
@@ -394,7 +331,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
         while player_health > 0 and enemy_health > 0:
             round_message = []
 
-            # Player's turn (weighted attack roll)
             player_roll = random.randint(1, player_dexterity + enemy_dexterity)
             if player_roll <= player_attack:
                 enemy_health -= player_attack
@@ -402,7 +338,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
             else:
                 round_message.append("You missed.")
 
-            # Enemy's turn (weighted attack roll)
             enemy_roll = random.randint(1, player_dexterity + enemy_dexterity)
             if enemy_roll <= enemy_dexterity:
                 player_health -= enemy_attack
@@ -410,31 +345,25 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
             else:
                 round_message.append(f"The {enemy_name} missed.")
 
-            # Display health
             round_message.append(f"Your health: {player_health}")
             round_message.append(f"{enemy_name}'s health: {enemy_health}")
 
-            # Send round message to the user
             await ctx.send("\n".join(round_message))
 
-            # Save the updated player health after each round
             user_data_RPG[user_id]['player_health'] = player_health
             save_data(user_data_RPG)
 
-            # Check for defeat
             if player_health <= 0 or enemy_health <= 0:
                 break
 
-            # Wait before next round
             await asyncio.sleep(0.5)
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
 
-    # Final outcome message
     if player_health <= 0:
         await ctx.send("You have been defeated!")
-        user_data_RPG[user_id]['player_health'] = 0  # Ensure health is set to 0 on defeat
+        user_data_RPG[user_id]['player_health'] = 0
     elif enemy_health <= 0:
         await asyncio.sleep(0.5)
         await ctx.send(f"The {enemy_name} has been defeated!")
@@ -447,10 +376,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
 
         if xp >= threshold:
             await lvl_up(ctx)
-        else:
-            pass
 
-        # Handle quest progress
         current_quest = user_data_RPG[user_id].get("current_quest", None)
         if current_quest:
             enemy = current_quest["enemy"]
@@ -460,50 +386,42 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
             if enemy_name == enemy and progress < amount:
                 progress += 1
                 current_quest["progress"] = progress
-                user_data_RPG[user_id]["current_quest"] = current_quest  # Update quest progress
+                user_data_RPG[user_id]["current_quest"] = current_quest
 
                 if progress == amount:
                     await complete_quest(ctx, user_id, current_quest["xp_reward"])
                 else:
                     await ctx.send(f"{progress} / {amount}")
 
-    # Save user data after the battle ends (this will save both health and quest progress)
-    user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated
+    user_data_RPG[user_id]['player_health'] = player_health
     save_data(user_data_RPG)
 
-
-@bot.command()
-async def move(ctx, direction, amount):
+@slash_command(name="move", description="Move in a direction")
+async def move(ctx: SlashContext, direction: str, amount: int):
     try:
         user_id = str(ctx.author.id)
-
-        # Load user data at the start of the move
         user_data_RPG = load_data()
 
-        # Check if the user exists in the data
         if user_id not in user_data_RPG:
-            await ctx.send("You need to initialize first with !initialize.")
+            await ctx.send("You need to initialize first with /initialize.")
             return
 
         x = user_data_RPG[user_id]['x']
         player_energy = user_data_RPG[user_id]['player_energy']
         y = user_data_RPG[user_id]['y']
 
-        # Validate direction
         valid_directions = ["w", "west", "n", "north", "e", "east", "s", "south"]
         direction = direction.lower()
         if direction not in valid_directions:
             await ctx.send("Please choose a valid direction (w/west, n/north, e/east, s/south).")
             return
 
-        # Validate amount
         try:
             amount = int(amount)
         except ValueError:
             await ctx.send("Please provide a valid integer for the amount.")
             return
 
-        # Move based on the direction and available energy
         if player_energy > 0:
             for i in range(amount):
                 if player_energy <= 0:
@@ -537,7 +455,6 @@ async def move(ctx, direction, amount):
                             await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"],
                                         enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
 
-                # Update user data and save it to the file
                 user_data_RPG[user_id]['x'] = x
                 user_data_RPG[user_id]['y'] = y
                 user_data_RPG[user_id]['player_energy'] = player_energy
@@ -548,13 +465,10 @@ async def move(ctx, direction, amount):
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
 
-
-@bot.command()
-async def rest(ctx, amount):
+@slash_command(name="rest", description="Rest to recharge your energy")
+async def rest(ctx: SlashContext, amount: int):
     try:
         user_id = str(ctx.author.id)
-
-        # Load user data
         user_data_RPG = load_data()
 
         player_energy = user_data_RPG[user_id]['player_energy']
@@ -573,80 +487,64 @@ async def rest(ctx, amount):
             await ctx.send(f"You need to rest for a positive number of seconds.")
             return
 
-        # If both health and energy are full, notify the user
         if player_energy == max_energy and player_health == max_hp:
             await ctx.send(f"Your energy and health are already full.")
             return
 
         await ctx.send(f"You sit down to rest for {amount} seconds.")
 
-        # Send the initial message
         message = await ctx.send(f"{amount} seconds remaining")
         await asyncio.sleep(1)
 
-        # Countdown and update message
         for i in range(amount):
-            # Update remaining time
             remaining_time = amount - (i + 1)
             await message.edit(content=f"{remaining_time} seconds remaining.")
 
-            # Simulate resting by increasing energy and health
             if player_energy < max_energy:
                 player_energy = min(player_energy + 1, max_energy)
             if player_health < max_hp:
                 player_health = min(player_health + 10, max_hp)
 
-            # Save updated energy and health after each increase
             user_data_RPG[user_id]['player_energy'] = player_energy
             user_data_RPG[user_id]['player_health'] = player_health
             save_data(user_data_RPG)
 
-            # If both energy and health are full, break the loop
             if player_energy == max_energy and player_health == max_hp:
                 await ctx.send(f"Your energy and health are now full.")
                 break
 
-            # Delay 1 second before the next loop iteration
             await asyncio.sleep(1)
 
-        # Final energy and health status
         await ctx.send(f"Rest is complete! You now have {player_energy} energy and {player_health} HP.")
     except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
-        logger.error(f"Error in move command: {e}")
+        await ctx.send("An error occurred while resting. Please try again later.")
+        logger.error(f"Error in rest command: {e}")
 
 
-@bot.command()
-async def look(ctx):
+@bot.slash_command(name="look", description="Describe your surroundings")
+async def look(ctx: SlashContext):
     try:
-        user_id = str(ctx.author.id)  # Ensure user_id is a string
-
-        # Load user data
+        user_id = str(ctx.author.id)
         user_data_RPG = load_data()
 
-        # Check if user data exists
         if user_id not in user_data_RPG:
-            await ctx.send("You need to initialize first with !initialize.")
+            await ctx.send("You need to initialize first with /initialize.")
             return
 
         x = user_data_RPG[user_id]['x']
         y = user_data_RPG[user_id]['y']
 
-        # Get the current place using get_place function
         place = await get_place(ctx)
 
         if place:
-            # If a place is found, display the place information
             await ctx.send(f"\n{place['description']}")
 
-            # Show items if available
             items = place.get('items', ['none'])
             if "none" not in items:
                 await ctx.send(f"Items: {', '.join(items)}")
             else:
                 await ctx.send("There are no items here.")
 
-            # Show NPCs if available
             npcs = place.get('npcs', ['none'])
             if "none" not in npcs:
                 for npc in npcs:
@@ -654,7 +552,6 @@ async def look(ctx):
             else:
                 await ctx.send("There are no NPCs here.")
         else:
-            # If no specific place is found, fallback to the biome
             biome = await get_biome(ctx)
             if biome:
                 await ctx.send(biome["look_description"])
@@ -680,12 +577,11 @@ async def look(ctx):
         else:
             await ctx.send("There are no other players here.")
     except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
-        logger.error(f"Error in move command: {e}")
+        await ctx.send("An error occurred while looking around. Please try again later.")
+        logger.error(f"Error in look command: {e}")
 
-
-@bot.command()
-async def talk(ctx, npc):
+@bot.slash_command(name="talk", description="Talk to an NPC")
+async def talk(ctx: SlashContext, npc: str):
     try:
         user_id = str(ctx.author.id)
         user_data_RPG = load_data()
@@ -718,12 +614,11 @@ async def talk(ctx, npc):
         else:
             await ctx.send("That isn't a valid NPC.")
     except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
-        logger.error(f"Error in move command: {e}")
+        await ctx.send("An error occurred while talking. Please try again later.")
+        logger.error(f"Error in talk command: {e}")
 
-
-@bot.command()
-async def help(ctx):
+@bot.slash_command(name="help", description="Provides a list of all the commands")
+async def help(ctx: SlashContext):
     await ctx.send("\nHere is a list of all the commands:"
                    "\n- help - provides a list of all the commands."
                    "\n- initialize - initializes the bot."
@@ -733,19 +628,16 @@ async def help(ctx):
                    "\n- look - describes your surroundings including npcs and items."
                    "\n- talk <npc> - lets you talk to npcs")
 
-
-@bot.command()
-async def stats(ctx):
+@bot.slash_command(name="stats", description="Display user stats")
+async def stats(ctx: SlashContext):
     try:
         user_id = str(ctx.author.id)
         user_data_RPG = load_data()
 
-        # Check if user data exists
         if user_id not in user_data_RPG:
-            await ctx.send("You need to initialize first with !initialize.")
+            await ctx.send("You need to initialize first with /initialize.")
             return
 
-        # Retrieve quest information from user data
         current_quest = user_data_RPG[user_id].get("current_quest", None)
         if current_quest:
             enemy = current_quest["enemy"]
@@ -765,14 +657,12 @@ async def stats(ctx):
                            f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
                            f"\nQuest: You don't have any quests.")
     except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
-        logger.error(f"Error in move command: {e}")
-
+        await ctx.send("An error occurred while displaying stats. Please try again later.")
+        logger.error(f"Error in stats command: {e}")
 
 @bot.event
 async def on_disconnect():
     save_data(user_data_RPG)
 
-
 # Run the bot
-bot.run(BOT_TOKEN)
+bot.start()
