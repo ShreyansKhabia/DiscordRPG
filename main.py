@@ -19,7 +19,6 @@ DATA_FILE = 'character_id.json'
 
 
 # Helper function to load user data
-# Helper function to load user data
 def load_data():
     try:
         with open(DATA_FILE, 'r') as f:
@@ -625,47 +624,33 @@ async def talk(ctx, npc):
     user_id = str(ctx.author.id)
     user_data_RPG = load_data()
 
-    # Check if the NPC exists in the dialogues dictionary
     if npc in dialouges:
-        # Retrieve the dialogue options for the NPC
         npc_dialogue = dialouges[npc]
-
-        # Create a view to hold the buttons for Quest and Help options
         view = discord.ui.View()
 
-        # Create buttons for Quest and Help
-        quest_button = discord.ui.Button(label="Quest", style=discord.ButtonStyle.blurple)
-        help_button = discord.ui.Button(label="Help", style=discord.ButtonStyle.blurple)
+        for option in npc_dialogue.keys():
+            button = discord.ui.Button(label=option, style=discord.ButtonStyle.blurple)
 
-        async def quest_button_callback(interaction):
-            if interaction.user == ctx.author:
-                current_quest = user_data_RPG[user_id].get("current_quest", None)
-                if current_quest and current_quest["progress"] == current_quest["amount"]:
-                    await interaction.response.send_message(npc_dialogue["Quest"]["clear"], ephemeral=True)
+            async def button_callback(interaction, option=option):
+                if interaction.user == ctx.author:
+                    if option == "Quest":
+                        current_quest = user_data_RPG[user_id].get("current_quest", None)
+                        if current_quest and current_quest["progress"] == current_quest["amount"]:
+                            await interaction.response.send_message(npc_dialogue[option]["clear"], ephemeral=True)
+                        else:
+                            quest_info = npc_dialogue[option]
+                            await quest(ctx, quest_info["enemy"], quest_info["amount"], quest_info)
+                    else:
+                        await interaction.response.send_message(npc_dialogue[option], ephemeral=True)
                 else:
-                    quest_info = npc_dialogue["Quest"]
-                    await quest(ctx, quest_info["enemy"], quest_info["amount"], quest_info)
-            else:
-                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
+                    await interaction.response.send_message("You cannot click this button!", ephemeral=True)
 
-        async def help_button_callback(interaction):
-            if interaction.user == ctx.author:
-                await interaction.response.send_message(npc_dialogue["Help"], ephemeral=True)
-            else:
-                await interaction.response.send_message("You cannot click this button!", ephemeral=True)
-
-        # Assign callbacks to buttons
-        quest_button.callback = quest_button_callback
-        help_button.callback = help_button_callback
-
-        # Add buttons to the view
-        view.add_item(quest_button)
-        view.add_item(help_button)
+            button.callback = button_callback
+            view.add_item(button)
 
         await ctx.send(f"Talking to {npc}. Please choose an option:", view=view)
     else:
         await ctx.send("That isn't a valid NPC.")
-
 
 @bot.command()
 async def help(ctx):
