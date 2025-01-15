@@ -411,9 +411,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
             # Check for defeat
             if player_health <= 0 or enemy_health <= 0:
                 break
-
-            # Wait before next round
-            await asyncio.sleep(0.5)
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
@@ -423,7 +420,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
         await ctx.send("You have been defeated!")
         user_data_RPG[user_id]['player_health'] = 0  # Ensure health is set to 0 on defeat
     elif enemy_health <= 0:
-        await asyncio.sleep(0.5)
         await ctx.send(f"The {enemy_name} has been defeated!")
         xp = user_data_RPG[user_id]["xp"]
         threshold = user_data_RPG[user_id]["threshold"]
@@ -508,7 +504,6 @@ async def move(ctx, direction, amount):
 
                 player_energy -= 1
                 await ctx.send(f"Your coordinates are now {x}, {y}. Remaining energy: {player_energy}")
-                await asyncio.sleep(0.5)
 
                 place = await get_place(ctx)
                 if place:
