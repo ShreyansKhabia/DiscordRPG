@@ -69,6 +69,13 @@ places = {
                     "npcs": ["Agrand"],
                     "cords": [0, 0]
                 },
+                "tavern": {
+                    "description": "You are at the tavern",
+                    "items": ["none"],
+                    "npcs": ["Jimmy"],
+                    "cords": [-1, 0],
+                    "enter_cords": [142142253, 5132346]
+                }
             }
         }
     }
@@ -107,6 +114,10 @@ dialouges = {
             "xp_reward": 50
         },
         "Help": "You need help you say? Try typing !help to get a list of commands!"
+    },
+    "Jimmy": {
+        "Talk": "Hey mate, this is the towns tavern!"
+                "\nYou can find some friendly lads there."
     }
 }
 
@@ -279,8 +290,7 @@ async def get_place(ctx):
                         # Check if the coordinates match the current region
                         if cords == [x, y]:
                             # Return the region details if coordinates match
-                            return region_info
-
+                            return region_info, region_key
         # If no region with matching coordinates is found, return None (or handle as needed)
         return None
     except Exception as e:
@@ -749,6 +759,26 @@ async def stats(ctx):
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
+
+
+@bot.command()
+async def enter(ctx, place):
+    user_data_RPG = load_data()
+    user_id = str(ctx.author.id)
+
+    place = place.lower()
+    current_place, place_name = await get_place(ctx)
+
+    if place == place_name:
+        user_data_RPG[user_id]["x"] = current_place["enter_cords"][0]
+        user_data_RPG[user_id]["y"] = current_place["enter_cords"][1]
+
+        save_data(user_data_RPG)
+
+        await ctx.send(f"You enter the {place_name}")
+
+
+
 
 
 @bot.event
