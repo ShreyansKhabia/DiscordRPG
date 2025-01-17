@@ -296,13 +296,12 @@ async def get_place(ctx):
                         # Check if the coordinates match the current region
                         if cords == [x, y]:
                             # Return the region details if coordinates match
-                            return region_info, region_key
+                            return region_info
         # If no region with matching coordinates is found, return None (or handle as needed)
         return None
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
-
 
 async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
     try:
