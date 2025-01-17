@@ -70,11 +70,17 @@ places = {
                     "cords": [0, 0]
                 },
                 "tavern": {
-                    "description": "You are at the tavern",
+                    "description": "You are at the tavern.",
                     "items": ["none"],
                     "npcs": ["Jimmy"],
                     "cords": [-1, 0],
                     "enter_cords": [142142253, 5132346]
+                },
+                "tavern inside": {
+                    "description": "You are in the tavern bustling with life.",
+                    "items": ["none"],
+                    "npcs": ["Stormeye"],
+                    "cords": [142142253, 5132346]
                 }
             }
         }
@@ -89,16 +95,12 @@ biomes = {
                 "enemy_attack": 13,
                 "enemy_dexterity": 5,
                 "xp": 50
-            },
-            #            "Feral cats": {
-            #                "enemy_health": 6,
-            #                "enemy_attack": 6
-            #            }
+            }
         },
         "description": "You stroll through the lucious grassy plains.",
         "look_description": "You are in the grassy fields of the Central Dominance.",
-        "freq": 1,
-        "area": [-50, 100, -50, 50],
+        "freq": 10,
+        "area": [-50, 100, -50, 50]
     }
 }
 
@@ -118,6 +120,10 @@ dialouges = {
     "Jimmy": {
         "Talk": "Hey mate, this is the towns tavern!"
                 "\nYou can find some friendly lads there."
+    },
+    "Stormeye": {
+        "Talk": "The fuck you doin' here kid?"
+                "\nFuck off."
     }
 }
 
