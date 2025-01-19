@@ -82,6 +82,48 @@ places = {
                     "npcs": ["Stormeye"],
                     "cords": [142142253, 5132346]
                 }
+            },
+            "Silverwood Forest": {
+                "entrance": {
+                    "description": "You are at the entrance of the Silverwood Forest.",
+                    "items": ["none"],
+                    "npcs": ["Eldrin"],
+                    "cords": [10, 10]
+                },
+                "deep woods": {
+                    "description": "You are deep within the Silverwood Forest.",
+                    "items": ["Silverwood bark"],
+                    "npcs": ["none"],
+                    "cords": [15, 15]
+                }
+            },
+            "The Dwarven Mines": {
+                "entrance": {
+                    "description": "You are at the entrance of the Dwarven Mines.",
+                    "items": ["none"],
+                    "npcs": ["Dorin"],
+                    "cords": [20, -10]
+                },
+                "mine shaft": {
+                    "description": "You are in the mine shaft of the Dwarven Mines.",
+                    "items": ["Iron ore"],
+                    "npcs": ["none"],
+                    "cords": [25, -15]
+                }
+            },
+            "Mystic Lake": {
+                "shore": {
+                    "description": "You are at the shore of the Mystic Lake.",
+                    "items": ["none"],
+                    "npcs": ["Mira"],
+                    "cords": [5, 20]
+                },
+                "island": {
+                    "description": "You are on a small island in the Mystic Lake.",
+                    "items": ["Mystic pearl"],
+                    "npcs": ["none"],
+                    "cords": [10, 25]
+                }
             }
         }
     }
@@ -103,7 +145,7 @@ biomes = {
                 "xp": 12
             }
         },
-        "description": "You stroll through the lucious grassy plains.",
+        "description": "You stroll through the luscious grassy plains.",
         "look_description": "You are in the grassy fields of the Central Dominance.",
         "freq": 10,
         "area": [-50, 100, -50, 50]
@@ -148,6 +190,58 @@ biomes = {
         "look_description": "Jagged mountain ranges rise sharply from the earth, the air growing thin and cold.",
         "freq": 5,
         "area": [50, 150, -200, 50]
+    },
+    "Sandy Desert": {
+        "enemies": {
+            "Sand Worm": {
+                "enemy_health": 50,
+                "enemy_attack": 20,
+                "enemy_dexterity": 4,
+                "xp": 70
+            },
+            "Scorpion": {
+                "enemy_health": 25,
+                "enemy_attack": 10,
+                "enemy_dexterity": 8,
+                "xp": 35
+            }
+        },
+        "description": "You are walking through the vast, hot Sandy Desert.",
+        "look_description": "The desert stretches endlessly, with sand dunes as far as the eye can see.",
+        "freq": 6,
+        "area": [100, 200, 50, 150]
+    },
+    "Frozen Tundra": {
+        "enemies": {
+            "Ice Golem": {
+                "enemy_health": 70,
+                "enemy_attack": 25,
+                "enemy_dexterity": 3,
+                "xp": 90
+            },
+            "Snow Leopard": {
+                "enemy_health": 30,
+                "enemy_attack": 15,
+                "enemy_dexterity": 7,
+                "xp": 40
+            }
+        },
+        "description": "You are traversing the cold, icy expanse of the Frozen Tundra.",
+        "look_description": "The tundra is covered in snow, with icy winds howling around you.",
+        "freq": 4,
+        "area": [-200, -100, -150, -50]
+    },
+    "The Iron Citadel": {
+        "description": "You are in the bustling city of The Iron Citadel.",
+        "look_description": "The city is filled with towering buildings and busy streets.",
+        "freq": 7,
+        "area": [0, 50, 0, 50]
+    },
+    "Elven Glade": {
+        "description": "You are in the serene and magical Elven Glade.",
+        "look_description": "The glade is filled with ancient trees and a sense of tranquility.",
+        "freq": 5,
+        "area": [-50, 0, -50, 0]
     }
 }
 
@@ -170,6 +264,30 @@ dialouges = {
     },
     "Stormeye": {
         "Talk": "Hey ma"
+    },
+    "Eldrin": {
+        "Quest": {
+            "description":
+                "Greetings traveler, I have a task for you."
+                "\nThe Shadow Wraiths have been causing trouble. Can you defeat 5 of them?",
+            "clear": "Thank you for defeating the Shadow Wraiths!",
+            "enemy": "Shadow wraith",
+            "amount": 5,
+            "xp_reward": 100
+        },
+        "Talk": "I am Eldrin the Wise. Seek knowledge and you shall find it."
+    },
+    "Captain Ironclad": {
+        "Quest": {
+            "description":
+                "Soldier, we need your help!"
+                "\nThe Mountain Trolls are attacking our fort. Defeat 3 of them.",
+            "clear": "Well done! You've saved our fort!",
+            "enemy": "Mountain Troll",
+            "amount": 3,
+            "xp_reward": 80
+        },
+        "Talk": "I am Captain Ironclad. Ready for battle!"
     }
 }
 
