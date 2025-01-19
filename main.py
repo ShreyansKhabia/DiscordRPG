@@ -80,7 +80,8 @@ places = {
                     "description": "You are in the tavern bustling with life.",
                     "items": ["none"],
                     "npcs": ["Stormeye"],
-                    "cords": [142142253, 5132346]
+                    "cords": [142142253, 5132346],
+                    "leave_cords": [-1, 0]
                 }
             },
             "Silverwood Forest": {
@@ -947,7 +948,21 @@ async def enter(ctx, place):
         await ctx.send(f"You enter the {place_name}")
 
 
+@bot.command()
+async def leave(ctx, place):
+    user_data_RPG = load_data()
+    user_id = str(ctx.author.id)
 
+    place = place.lower()
+    current_place, place_name = await get_place(ctx)
+
+    if place == place_name:
+        user_data_RPG[user_id]["x"] = current_place["leave_cords"][0]
+        user_data_RPG[user_id]["y"] = current_place["leave_cords"][1]
+
+        save_data(user_data_RPG)
+
+        await ctx.send(f"You leave the {place_name}")
 
 
 @bot.event
