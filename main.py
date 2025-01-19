@@ -950,19 +950,27 @@ async def enter(ctx, place):
 
 @bot.command()
 async def leave(ctx, place):
-    user_data_RPG = load_data()
-    user_id = str(ctx.author.id)
+    try:
+        user_data_RPG = load_data()
+        user_id = str(ctx.author.id)
 
-    place = place.lower()
-    current_place, place_name = await get_place(ctx)
+        place = place.lower()
+        current_place = await get_place(ctx)
 
-    if place == place_name:
-        user_data_RPG[user_id]["x"] = current_place["leave_cords"][0]
-        user_data_RPG[user_id]["y"] = current_place["leave_cords"][1]
+        if current_place and place == current_place.get('name', '').lower():
+            if "leave_cords" in current_place:
+                user_data_RPG[user_id]["x"] = current_place["leave_cords"][0]
+                user_data_RPG[user_id]["y"] = current_place["leave_cords"][1]
 
-        save_data(user_data_RPG)
-
-        await ctx.send(f"You leave the {place_name}")
+                save_data(user_data_RPG)
+                await ctx.send(f"You leave the {current_place['name']}")
+            else:
+                await ctx.send(f"The place {current_place['name']} does not have leave coordinates.")
+        else:
+            await ctx.send(f"You are not in the specified place: {place}.")
+    except Exception as e:
+        await ctx.send("An error occurred. Please try again later.")
+        logger.error(f"Error in leave command: {e}")
 
 
 @bot.event
