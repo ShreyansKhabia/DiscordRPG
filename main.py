@@ -94,13 +94,60 @@ biomes = {
                 "enemy_health": 30,
                 "enemy_attack": 13,
                 "enemy_dexterity": 5,
-                "xp": 50
+                "xp": 32
+            },
+            "Feral cat": {
+                "enemy_health": 12,
+                "enemy_attack": 3,
+                "enemy_dexterity": 6,
+                "xp": 12
             }
         },
         "description": "You stroll through the lucious grassy plains.",
         "look_description": "You are in the grassy fields of the Central Dominance.",
         "freq": 10,
         "area": [-50, 100, -50, 50]
+    },
+    "Dark forest": {
+        "enemies": {
+            "Shadow wraith": {
+                "enemy_health": 40,
+                "enemy_attack": 15,
+                "enemy_dexterity": 8,
+                "xp": 50
+            },
+            "Gloom Spider": {
+                "enemy_health": 20,
+                "enemy_attack": 5,
+                "enemy_dexterity": 4,
+                "xp": 20
+            }
+        },
+        "description": "You are in a dense, mist-covered forest where light barely breaks through the thick canopy.",
+        "look_description": "The dark woods stretch endlessly, their trees towering high above.",
+        "freq": 8,
+        "area": [-100, 200, -200, 100]
+    },
+    "Craggy Mountains": {
+        "enemies": {
+            "Mountain Troll": {
+                "enemy_health": 60,
+                "enemy_attack": 20,
+                "enemy_dexterity": 3,
+                "xp": 75
+            },
+            "Gloom Spider": {
+                "enemy_health": 100,
+                "enemy_attack": 25,
+                "enemy_dexterity": 2,
+                "xp": 120
+            }
+        },
+        "description": "You are in the rocky cliffs and steep peaks of the Craggy Mountains. The wind howls through "
+                       "the craggy terrain.",
+        "look_description": "Jagged mountain ranges rise sharply from the earth, the air growing thin and cold.",
+        "freq": 5,
+        "area": [50, 150, -200, 50]
     }
 }
 
@@ -122,8 +169,7 @@ dialouges = {
                 "\nYou can find some friendly lads there."
     },
     "Stormeye": {
-        "Talk": "The fuck you doin' here kid?"
-                "\nFuck off."
+        "Talk": "Hey ma"
     }
 }
 
