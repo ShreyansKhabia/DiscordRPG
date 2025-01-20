@@ -957,15 +957,15 @@ async def leave(ctx, place):
         place = place.lower()
         current_place = await get_place(ctx)
 
-        if current_place and place == current_place.get('name', '').lower():
+        if current_place and place in current_place.get('description', '').lower():
             if "leave_cords" in current_place:
                 user_data_RPG[user_id]["x"] = current_place["leave_cords"][0]
                 user_data_RPG[user_id]["y"] = current_place["leave_cords"][1]
 
                 save_data(user_data_RPG)
-                await ctx.send(f"You leave the {current_place['name']}")
+                await ctx.send(f"You leave the {current_place['description']}")
             else:
-                await ctx.send(f"The place {current_place['name']} does not have leave coordinates.")
+                await ctx.send(f"The place {current_place['description']} does not have leave coordinates.")
         else:
             await ctx.send(f"You are not in the specified place: {place}.")
     except Exception as e:
