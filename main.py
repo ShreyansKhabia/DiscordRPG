@@ -473,31 +473,18 @@ async def get_place(ctx):
         return None, None
 
 
-async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
-    try:
-        user_data_RPG = load_data()
-        user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0,
-                                                   "xp_reward": xp_reward}
-        save_data(user_data_RPG)
-        await ctx.send(f"You have accepted the quest to kill {amount} {enemy}")
-    except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
-        logger.error(f"Error in move command: {e}")
-
-
-# Function to handle declining a quest
-async def decline_quest(ctx):
-    await ctx.send("You have declined the quest.")
-
-
 async def quest(ctx, enemy, amount, quest_info):
     try:
         user_id = str(ctx.author.id)
-
         user_data_RPG = load_data()
 
-        if user_data_RPG[user_id]["current_quest"]:
-            await ctx.send("You are already doing a quest!")
+        current_quest = user_data_RPG[user_id]["current_quest"]
+
+        if current_quest:
+            if current_quest["enemy"] != enemy and current_quest["amount"] != amount:
+                await ctx.send("Come back when you have completed the quest.")
+            else:
+                await ctx.send("You are already doing a quest!")
         else:
             # Create buttons for accepting or declining the quest
             view = discord.ui.View()
@@ -526,10 +513,37 @@ async def quest(ctx, enemy, amount, quest_info):
             await ctx.send(quest_info["description"], ephemeral=True)
             await ctx.send(f"Do you want to accept the quest to kill {amount} {enemy}?", view=view)
     except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
-        logger.error(f"Error in move command: {e}")
+        await ctx.send("An error occurred while processing the quest. Please try again later.")
+        logger.error(f"Error in quest function: {e}")
 
 
+# Function to handle accepting a quest
+async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
+    try:
+        user_data_RPG = load_data()
+        user_data_RPG[user_id]["current_quest"] = {
+            "enemy": enemy,
+            "amount": amount,
+            "progress": 0,
+            "xp_reward": xp_reward
+        }
+        save_data(user_data_RPG)
+        await ctx.send(f"You have accepted the quest to kill {amount} {enemy}.")
+    except Exception as e:
+        await ctx.send("An error occurred while accepting the quest. Please try again later.")
+        logger.error(f"Error in accept_quest function: {e}")
+
+
+# Function to handle declining a quest
+async def decline_quest(ctx):
+    try:
+        await ctx.send("You have declined the quest.")
+    except Exception as e:
+        await ctx.send("An error occurred while declining the quest. Please try again later.")
+        logger.error(f"Error in decline_quest function: {e}")
+
+
+# Function to handle completing a quest
 async def complete_quest(ctx, user_id, xp_reward):
     try:
         user_data_RPG = load_data()
@@ -537,7 +551,6 @@ async def complete_quest(ctx, user_id, xp_reward):
         threshold = user_data_RPG[user_id]["threshold"]
 
         xp += xp_reward
-
         user_data_RPG[user_id]["xp"] = xp
 
         if xp >= threshold:
@@ -548,8 +561,8 @@ async def complete_quest(ctx, user_id, xp_reward):
 
         await ctx.send(f"You have completed your quest and earned {xp_reward} XP!")
     except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
-        logger.error(f"Error in move command: {e}")
+        await ctx.send("An error occurred while completing the quest. Please try again later.")
+        logger.error(f"Error in complete_quest function: {e}")
 
 
 async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, enemy_xp):
@@ -849,6 +862,7 @@ async def look(ctx):
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
+
 
 @bot.command()
 async def talk(ctx, npc):
