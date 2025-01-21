@@ -931,8 +931,8 @@ async def stats(ctx):
                            f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
                            f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
                            f"\nQuest: {enemy} {progress} / {amount}"
-                           f"\Xp: {user_data_RPG[user_id]['threshold']} / {user_data_RPG[user_id]['xp']}"
-                           f"\Name: {user_data_RPG[user_id]['name']}")
+                           f"\nXp: {user_data_RPG[user_id]['threshold']} / {user_data_RPG[user_id]['xp']}"
+                           f"\nName: {user_data_RPG[user_id]['name']}")
         else:
             await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
                            f"\nHealth: {user_data_RPG[user_id]['player_health']} / {user_data_RPG[user_id]['max_hp']}"
@@ -940,8 +940,8 @@ async def stats(ctx):
                            f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
                            f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
                            f"\nQuest: You don't have any quests."
-                           f"\Xp: {user_data_RPG[user_id]['threshold']} / {user_data_RPG[user_id]['xp']}"
-                           f"\Name: {user_data_RPG[user_id]['name']}")
+                           f"\nXp: {user_data_RPG[user_id]['threshold']} / {user_data_RPG[user_id]['xp']}"
+                           f"\nName: {user_data_RPG[user_id]['name']}")
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in the stats command: {e}")
