@@ -558,8 +558,8 @@ async def complete_quest(ctx, user_id, xp_reward):
 
         user_data_RPG[user_id]["current_quest"] = None  # Clear current quest
         save_data(user_data_RPG)
-
         await ctx.send(f"You have completed your quest and earned {xp_reward} XP!")
+
     except Exception as e:
         await ctx.send("An error occurred while completing the quest. Please try again later.")
         logger.error(f"Error in complete_quest function: {e}")
@@ -629,6 +629,8 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
 
         if xp >= threshold:
             await lvl_up(ctx)
+            user_data_RPG = load_data()
+            save_data(user_data_RPG)
         else:
             pass
 
@@ -711,6 +713,7 @@ async def move(ctx, direction, amount):
                             await ctx.send(f"You encounter a {enemy_name}")
                             await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"],
                                         enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
+                user_data_RPG = load_data()
 
                 user_data_RPG[user_id]['x'] = x
                 user_data_RPG[user_id]['y'] = y
