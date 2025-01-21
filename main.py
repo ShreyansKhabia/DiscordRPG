@@ -81,7 +81,8 @@ places = {
                     "items": ["none"],
                     "npcs": ["Stormeye"],
                     "cords": [142142253, 5132346],
-                    "leave_cords": [-1, 0]
+                    "leave_cords": [-1, 0],
+                    "leave_name": "tavern"
                 }
             },
             "Silverwood Forest": {
@@ -460,10 +461,12 @@ async def get_place(ctx):
 
                         cords = region_info["cords"]
 
+                        leave_name = region_info["leave_name"]
+
                         # Check if the coordinates match the current region
                         if cords == [x, y]:
                             # Return the region details if coordinates match
-                            return region_info, region_key
+                            return region_info, region_key, leave_name
         # If no region with matching coordinates is found, return None (or handle as needed)
         return None, None
     except Exception as e:
@@ -471,10 +474,12 @@ async def get_place(ctx):
         logger.error(f"Error in move command: {e}")
         return None, None
 
+
 async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
     try:
         user_data_RPG = load_data()
-        user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0, "xp_reward": xp_reward}
+        user_data_RPG[user_id]["current_quest"] = {"enemy": enemy, "amount": amount, "progress": 0,
+                                                   "xp_reward": xp_reward}
         save_data(user_data_RPG)
         await ctx.send(f"You have accepted the quest to kill {amount} {enemy}")
     except Exception as e:
@@ -642,34 +647,28 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
 async def move(ctx, direction, amount):
     try:
         user_id = str(ctx.author.id)
-
-        # Load user data at the start of the move
         user_data_RPG = load_data()
 
-        # Check if the user exists in the data
         if user_id not in user_data_RPG:
             await ctx.send("You need to initialize first with !initialize.")
             return
 
         x = user_data_RPG[user_id]['x']
-        player_energy = user_data_RPG[user_id]['player_energy']
         y = user_data_RPG[user_id]['y']
+        player_energy = user_data_RPG[user_id]['player_energy']
 
-        # Validate direction
         valid_directions = ["w", "west", "n", "north", "e", "east", "s", "south"]
         direction = direction.lower()
         if direction not in valid_directions:
             await ctx.send("Please choose a valid direction (w/west, n/north, e/east, s/south).")
             return
 
-        # Validate amount
         try:
             amount = int(amount)
         except ValueError:
             await ctx.send("Please provide a valid integer for the amount.")
             return
 
-        # Move based on the direction and available energy
         if player_energy > 0:
             for i in range(amount):
                 if player_energy <= 0:
@@ -688,7 +687,7 @@ async def move(ctx, direction, amount):
                 player_energy -= 1
                 await ctx.send(f"Your coordinates are now {x}, {y}. Remaining energy: {player_energy}")
 
-                place = await get_place(ctx)
+                place, place_key, leave_name = await get_place(ctx)
                 if place:
                     await ctx.send(place["description"])
                 else:
@@ -702,7 +701,6 @@ async def move(ctx, direction, amount):
                             await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"],
                                         enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
 
-                # Update user data and save it to the file
                 user_data_RPG[user_id]['x'] = x
                 user_data_RPG[user_id]['y'] = y
                 user_data_RPG[user_id]['player_energy'] = player_energy
@@ -803,7 +801,7 @@ async def look(ctx):
         y = user_data_RPG[user_id]['y']
 
         # Get the current place using get_place function
-        place = await get_place(ctx)
+        place, place_key, leave_name = await get_place(ctx)
 
         if place:
             # If a place is found, display the place information
@@ -914,36 +912,38 @@ async def stats(ctx):
         user_id = str(ctx.author.id)
         user_data_RPG = load_data()
 
-        # Check if user data exists
         if user_id not in user_data_RPG:
             await ctx.send("You need to initialize first with !initialize.")
             return
 
-        # Retrieve quest information from user data
-        current_quest = user_data_RPG[user_id].get("current_quest", None)
+        user_info = user_data_RPG[user_id]
+        current_quest = user_info.get("current_quest", None)
+        name = user_info.get("name", "Anonymous")  # Default to "Anonymous" if name is not set
+
         if current_quest:
-            enemy = current_quest["enemy"]
-            amount = current_quest["amount"]
-            progress = current_quest["progress"]
-            await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
-                           f"\nHealth: {user_data_RPG[user_id]['player_health']} / {user_data_RPG[user_id]['max_hp']}"
-                           f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
-                           f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
-                           f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
-                           f"\nQuest: {enemy} {progress} / {amount}"
-                           f"\nXp: {user_data_RPG[user_id]['threshold']} / {user_data_RPG[user_id]['xp']}"
-                           f"\nName: {user_data_RPG[user_id]['name']}")
+            await ctx.send(f"""
+                Position: {user_info['x']}, {user_info['y']}
+                Health: {user_info['player_health']} / {user_info['max_hp']}
+                Attack: {user_info['player_attack']}
+                Dexterity: {user_info['player_dexterity']}
+                Energy: {user_info['player_energy']} / {user_info['max_energy']}
+                Quest: {current_quest['enemy']} {current_quest['progress']} / {current_quest['amount']}
+                Xp: {user_info['threshold']} / {user_info['xp']}
+                Name: {name}
+            """)
         else:
-            await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
-                           f"\nHealth: {user_data_RPG[user_id]['player_health']} / {user_data_RPG[user_id]['max_hp']}"
-                           f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
-                           f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
-                           f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
-                           f"\nQuest: You don't have any quests."
-                           f"\nXp: {user_data_RPG[user_id]['threshold']} / {user_data_RPG[user_id]['xp']}"
-                           f"\nName: {user_data_RPG[user_id]['name']}")
+            await ctx.send(f"""
+                Position: {user_info['x']}, {user_info['y']}
+                Health: {user_info['player_health']} / {user_info['max_hp']}
+                Attack: {user_info['player_attack']}
+                Dexterity: {user_info['player_dexterity']}
+                Energy: {user_info['player_energy']} / {user_info['max_energy']}
+                Quest: You don't have any quests.
+                Xp: {user_info['threshold']} / {user_info['xp']}
+                Name: {name}
+            """)
     except Exception as e:
-        await ctx.send("An error occurred while moving. Please try again later.")
+        await ctx.send("An error occurred while fetching stats. Please try again later.")
         logger.error(f"Error in the stats command: {e}")
 
 
@@ -953,15 +953,15 @@ async def enter(ctx, place):
     user_id = str(ctx.author.id)
 
     place = place.lower()
-    current_place, place_name = await get_place(ctx)
+    current_place, region_key, leave_name = await get_place(ctx)
 
-    if current_place and place == place_name:
+    if current_place and place == region_key:
         user_data_RPG[user_id]["x"] = current_place["enter_cords"][0]
-        user_data_RPG[user_id]["y"] = current_place["enter_cords"][1]
+        user_data_RPG[user_id]["y"] = current_place["endter_cords"][1]
 
         save_data(user_data_RPG)
 
-        await ctx.send(f"You enter the {place_name}")
+        await ctx.send(f"You enter the {region_key}")
     else:
         await ctx.send(f"You cannot enter {place}.")
 
@@ -973,7 +973,7 @@ async def leave(ctx, place):
         user_id = str(ctx.author.id)
 
         place = place.lower()
-        current_place = await get_place(ctx)
+        current_place, region_key, leave_name = await get_place(ctx)
 
         if current_place and place in current_place.get('description', '').lower():
             if "leave_cords" in current_place:
@@ -981,9 +981,9 @@ async def leave(ctx, place):
                 user_data_RPG[user_id]["y"] = current_place["leave_cords"][1]
 
                 save_data(user_data_RPG)
-                await ctx.send(f"You leave the {current_place['description']}")
+                await ctx.send(f"You leave the {leave_name}")
             else:
-                await ctx.send(f"The place {current_place['description']} does not have leave coordinates.")
+                await ctx.send(f"The place {leave_name} does not have leave coordinates.")
         else:
             await ctx.send(f"You are not in the specified place: {place}.")
     except Exception as e:
