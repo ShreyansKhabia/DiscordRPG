@@ -323,13 +323,15 @@ async def initialize(ctx):
                 "current_quest": None,
                 "progress": 0,
                 "xp": 0,
-                "threshold": 50
+                "threshold": 50,
+                "name": "Anonymous"
             }
 
             # Save the updated user data to the file only when new data is added
             save_data(user_data_RPG)
 
             await ctx.send("Bot initialized")
+            await ctx.send("Please choose a name with !name <name>")
         else:
             await ctx.send("You are already initialized!")
     except Exception as e:
@@ -778,6 +780,11 @@ async def rest(ctx, amount):
         logger.error(f"Error in move command: {e}")
 
 
+async def get_user_name(user_id):
+    user = await bot.fetch_user(user_id)
+    return user.name
+
+
 @bot.command()
 async def look(ctx):
     try:
@@ -838,7 +845,8 @@ async def look(ctx):
         other_players = [user for user in user_data_RPG if
                          user != user_id and user_data_RPG[user]['x'] == x and user_data_RPG[user]['y'] == y]
         if other_players:
-            await ctx.send(f"Players here: {', '.join(other_players)}")
+            player_names = await asyncio.gather(*[get_user_name(user) for user in other_players])
+            await ctx.send(f"Players here: {', '.join(player_names)}")
         else:
             await ctx.send("There are no other players here.")
     except Exception as e:
@@ -893,7 +901,10 @@ async def help(ctx):
                    "\n- move <direction> <amount> - lets you move through the map."
                    "\n- rest <amount> - lets you recharge your energy."
                    "\n- look - describes your surroundings including npcs and items."
-                   "\n- talk <npc> - lets you talk to npcs")
+                   "\n- talk <npc> - lets you talk to npcs."
+                   "\n- name <name> - lets you name your character."
+                   "\n- leave <place> - leave buildings."
+                   "\n- enter <place> - enter buildings.")
 
 
 @bot.command()
@@ -918,14 +929,16 @@ async def stats(ctx):
                            f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
                            f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
                            f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
-                           f"\nQuest: {enemy} {progress} / {amount}")
+                           f"\nQuest: {enemy} {progress} / {amount}"
+                           f"\Xp: {user_data_RPG[user_id]['threshold']} / {user_data_RPG[user_id]['xp']}")
         else:
             await ctx.send(f"\nPosition: {user_data_RPG[user_id]['x']}, {user_data_RPG[user_id]['y']}"
                            f"\nHealth: {user_data_RPG[user_id]['player_health']} / {user_data_RPG[user_id]['max_hp']}"
                            f"\nAttack: {user_data_RPG[user_id]['player_attack']}"
                            f"\nDexterity: {user_data_RPG[user_id]['player_dexterity']}"
                            f"\nEnergy: {user_data_RPG[user_id]['player_energy']} / {user_data_RPG[user_id]['max_energy']}"
-                           f"\nQuest: You don't have any quests.")
+                           f"\nQuest: You don't have any quests."
+                           f"\Xp: {user_data_RPG[user_id]['threshold']} / {user_data_RPG[user_id]['xp']}")
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
@@ -971,6 +984,14 @@ async def leave(ctx, place):
     except Exception as e:
         await ctx.send("An error occurred. Please try again later.")
         logger.error(f"Error in leave command: {e}")
+
+
+@bot.command()
+async def name(ctx, name):
+    user_data_RPG = load_data
+    user_id = str(ctx.author.id)
+
+    user_data_RPG[user_id]["name"] = name
 
 
 @bot.event
