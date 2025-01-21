@@ -1,11 +1,41 @@
-Hey there!
+## Installation Guide
 
-Im making this little RPG game in discord.
+1. **Clone the Repository**
+```sh
+git clone https://github.com/DrDehydratedWater/DiscordRPG.git
+cd DiscordRPG
+```
+2. **Create a Virtual Environment** (optional but recommended)
+```sh
+python -m venv venv
+source venv/bin/activate   # On Windows use `venv\Scripts\activate
+```
+3. **Install Dependencies**
 
-You are free to use this to make your own with custom biomes, dialouges, places and simple quests (you can currently set quests so the user has to kill an enemy X number of times.).
-This is still work in progress and i am planning to add a lot more!
+```sh
+pip install -r requirements.txt
+```
+4. **Set Up Bot Token**
 
-If you want to make your own you have to create your own discord bot and make a folder called secret and put your file with your token there!
-Please give credit and don't just copy paste it!
+    Create a file `secret/bot_token.env`.
+  
+    Add your Discord bot token to the file:
+    
+   `YOUR_BOT_TOKEN`
+  
+5. **Run the Bot**
 
-:D
+```sh
+python main.py
+```
+Usage
+- **Initialize the Bot:** `!initialize`
+- **Ping the Bot:** `!ping`
+- **Move Your Character:** `!move <direction> <amount>`
+- **Rest to Recharge Energy:** `!rest <amount>`
+- **Look Around:** `!look`
+- **Talk to NPCs:** `!talk <npc>`
+- **Set Your Character's Name:** `!name <name>`
+- **Leave/Enter Buildings:** `!leave <place> / !enter <place>`
+- **Check Your Stats:** `!stats`
+- **Get Help:** `!help`
