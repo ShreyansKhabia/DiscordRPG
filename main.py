@@ -149,7 +149,7 @@ biomes = {
         },
         "description": "You stroll through the luscious grassy plains.",
         "look_description": "You are in the grassy fields of the Central Dominance.",
-        "freq": 10,
+        "freq": 1,
         "area": [-50, 100, -50, 50]
     },
     "Dark forest": {
@@ -461,12 +461,10 @@ async def get_place(ctx):
 
                         cords = region_info["cords"]
 
-                        leave_name = region_info["leave_name"]
-
                         # Check if the coordinates match the current region
                         if cords == [x, y]:
                             # Return the region details if coordinates match
-                            return region_info, region_key, leave_name
+                            return region_info, region_key
         # If no region with matching coordinates is found, return None (or handle as needed)
         return None, None
     except Exception as e:
@@ -687,7 +685,7 @@ async def move(ctx, direction, amount):
                 player_energy -= 1
                 await ctx.send(f"Your coordinates are now {x}, {y}. Remaining energy: {player_energy}")
 
-                place, place_key, leave_name = await get_place(ctx)
+                place, place_key = await get_place(ctx)
                 if place:
                     await ctx.send(place["description"])
                 else:
@@ -801,7 +799,7 @@ async def look(ctx):
         y = user_data_RPG[user_id]['y']
 
         # Get the current place using get_place function
-        place, place_key, leave_name = await get_place(ctx)
+        place, place_key = await get_place(ctx)
 
         if place:
             # If a place is found, display the place information
@@ -851,7 +849,6 @@ async def look(ctx):
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
-
 
 @bot.command()
 async def talk(ctx, npc):
@@ -953,15 +950,15 @@ async def enter(ctx, place):
     user_id = str(ctx.author.id)
 
     place = place.lower()
-    current_place, region_key, leave_name = await get_place(ctx)
+    current_place, place_name = await get_place(ctx)
 
-    if current_place and place == region_key:
+    if current_place and place == place_name:
         user_data_RPG[user_id]["x"] = current_place["enter_cords"][0]
-        user_data_RPG[user_id]["y"] = current_place["endter_cords"][1]
+        user_data_RPG[user_id]["y"] = current_place["enter_cords"][1]
 
         save_data(user_data_RPG)
 
-        await ctx.send(f"You enter the {region_key}")
+        await ctx.send(f"You enter the {place_name}")
     else:
         await ctx.send(f"You cannot enter {place}.")
 
@@ -973,7 +970,7 @@ async def leave(ctx, place):
         user_id = str(ctx.author.id)
 
         place = place.lower()
-        current_place, region_key, leave_name = await get_place(ctx)
+        current_place, place_name = await get_place(ctx)
 
         if current_place and place in current_place.get('description', '').lower():
             if "leave_cords" in current_place:
@@ -981,9 +978,9 @@ async def leave(ctx, place):
                 user_data_RPG[user_id]["y"] = current_place["leave_cords"][1]
 
                 save_data(user_data_RPG)
-                await ctx.send(f"You leave the {leave_name}")
+                await ctx.send(f"You leave the {place_name}")
             else:
-                await ctx.send(f"The place {leave_name} does not have leave coordinates.")
+                await ctx.send(f"The place {place_name} does not have leave coordinates.")
         else:
             await ctx.send(f"You are not in the specified place: {place}.")
     except Exception as e:
