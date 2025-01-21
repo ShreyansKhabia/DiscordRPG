@@ -568,11 +568,8 @@ async def complete_quest(ctx, user_id, xp_reward):
 async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, enemy_xp):
     try:
         user_id = str(ctx.author.id)
-
-        # Load user data at the start of the fight
         user_data_RPG = load_data()
 
-        # Get the player's initial health and attack values
         player_health = user_data_RPG[user_id]['player_health']
         player_attack = user_data_RPG[user_id]['player_attack']
         player_dexterity = user_data_RPG[user_id]['player_dexterity']
@@ -580,7 +577,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
         while player_health > 0 and enemy_health > 0:
             round_message = []
 
-            # Player's turn (weighted attack roll)
             player_roll = random.randint(1, player_dexterity + enemy_dexterity)
             if player_roll <= player_attack:
                 enemy_health -= player_attack
@@ -588,7 +584,6 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
             else:
                 round_message.append("You missed.")
 
-            # Enemy's turn (weighted attack roll)
             enemy_roll = random.randint(1, player_dexterity + enemy_dexterity)
             if enemy_roll <= enemy_dexterity:
                 player_health -= enemy_attack
@@ -596,45 +591,34 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
             else:
                 round_message.append(f"The {enemy_name} missed.")
 
-            # Display health
             round_message.append(f"Your health: {player_health}")
             round_message.append(f"{enemy_name}'s health: {enemy_health}")
 
-            # Send round message to the user
             await ctx.send("\n".join(round_message))
 
-            # Save the updated player health after each round
             user_data_RPG[user_id]['player_health'] = player_health
             save_data(user_data_RPG)
 
-            # Check for defeat
             if player_health <= 0 or enemy_health <= 0:
                 break
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
 
-    # Final outcome message
     if player_health <= 0:
         await ctx.send("You have been defeated!")
-        user_data_RPG[user_id]['player_health'] = 0  # Ensure health is set to 0 on defeat
+        user_data_RPG[user_id]['player_health'] = 0
     elif enemy_health <= 0:
         await ctx.send(f"The {enemy_name} has been defeated!")
         xp = user_data_RPG[user_id]["xp"]
         threshold = user_data_RPG[user_id]["threshold"]
 
         xp += enemy_xp
-
         user_data_RPG[user_id]["xp"] = xp
 
         if xp >= threshold:
             await lvl_up(ctx)
-            user_data_RPG = load_data()
-            save_data(user_data_RPG)
-        else:
-            pass
 
-        # Handle quest progress
         current_quest = user_data_RPG[user_id].get("current_quest", None)
         if current_quest:
             enemy = current_quest["enemy"]
@@ -644,17 +628,16 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
             if enemy_name == enemy and progress < amount:
                 progress += 1
                 current_quest["progress"] = progress
-                user_data_RPG[user_id]["current_quest"] = current_quest  # Update quest progress
+                user_data_RPG[user_id]["current_quest"] = current_quest
 
                 if progress == amount:
                     await complete_quest(ctx, user_id, current_quest["xp_reward"])
                 else:
                     await ctx.send(f"{progress} / {amount}")
 
-    # Save user data after the battle ends (this will save both health and quest progress)
-    user_data_RPG[user_id]['player_health'] = player_health  # Ensure health is updated
+    user_data_RPG = load_data()
+    user_data_RPG[user_id]['player_health'] = player_health
     save_data(user_data_RPG)
-
 
 @bot.command()
 async def move(ctx, direction, amount):
