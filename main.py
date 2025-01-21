@@ -82,7 +82,6 @@ places = {
                     "npcs": ["Stormeye"],
                     "cords": [142142253, 5132346],
                     "leave_cords": [-1, 0],
-                    "leave_name": "tavern"
                 }
             },
             "Silverwood Forest": {
@@ -639,6 +638,7 @@ async def fight(ctx, enemy_health, enemy_attack, enemy_dexterity, enemy_name, en
     user_data_RPG[user_id]['player_health'] = player_health
     save_data(user_data_RPG)
 
+
 @bot.command()
 async def move(ctx, direction, amount):
     try:
@@ -916,29 +916,50 @@ async def stats(ctx):
         user_info = user_data_RPG[user_id]
         current_quest = user_info.get("current_quest", None)
         name = user_info.get("name", "Anonymous")  # Default to "Anonymous" if name is not set
+        current_place, place_name = get_place(ctx)
 
         if current_quest:
-            await ctx.send(f"""
-                Position: {user_info['x']}, {user_info['y']}
-                Health: {user_info['player_health']} / {user_info['max_hp']}
-                Attack: {user_info['player_attack']}
-                Dexterity: {user_info['player_dexterity']}
-                Energy: {user_info['player_energy']} / {user_info['max_energy']}
-                Quest: {current_quest['enemy']} {current_quest['progress']} / {current_quest['amount']}
-                Xp: {user_info['threshold']} / {user_info['xp']}
-                Name: {name}
-            """)
+            if "leave_cords" in current_place:
+                await ctx.send(
+                    f"Position: {current_place['leave_cords'][0]}, {current_place['leave_cords'][1]}"
+                    f"Health: {user_info['player_health']} / {user_info['max_hp']}"
+                    f"Attack: {user_info['player_attack']}"
+                    f"Dexterity: {user_info['player_dexterity']}"
+                    f"Energy: {user_info['player_energy']} / {user_info['max_energy']}"
+                    f"Quest: {current_quest['enemy']} {current_quest['progress']} / {current_quest['amount']}"
+                    f"Xp: {user_info['threshold']} / {user_info['xp']}"
+                    f"Name: {name}")
+            else:
+                await ctx.send(
+                    f"Position: {user_info['x']}, {user_info['y']}"
+                    f"Health: {user_info['player_health']} / {user_info['max_hp']}"
+                    f"Attack: {user_info['player_attack']}"
+                    f"Dexterity: {user_info['player_dexterity']}"
+                    f"Energy: {user_info['player_energy']} / {user_info['max_energy']}"
+                    f"Quest: {current_quest['enemy']} {current_quest['progress']} / {current_quest['amount']}"
+                    f"Xp: {user_info['threshold']} / {user_info['xp']}"
+                    f"Name: {name}")
         else:
-            await ctx.send(f"""
-                Position: {user_info['x']}, {user_info['y']}
-                Health: {user_info['player_health']} / {user_info['max_hp']}
-                Attack: {user_info['player_attack']}
-                Dexterity: {user_info['player_dexterity']}
-                Energy: {user_info['player_energy']} / {user_info['max_energy']}
-                Quest: You don't have any quests.
-                Xp: {user_info['threshold']} / {user_info['xp']}
-                Name: {name}
-            """)
+            if "leave_cords" in current_place:
+                await ctx.send(
+                    f"Position: {current_place['leave_cords'][0]}, {current_place['leave_cords'][1]}"
+                    f"Health: {user_info['player_health']} / {user_info['max_hp']}"
+                    f"Attack: {user_info['player_attack']}"
+                    f"Dexterity: {user_info['player_dexterity']}"
+                    f"Energy: {user_info['player_energy']} / {user_info['max_energy']}"
+                    f"Quest: You don't have any quests."
+                    f"Xp: {user_info['threshold']} / {user_info['xp']}"
+                    f"Name: {name}")
+            else:
+                await ctx.send(
+                    f"Position: {user_info['x']}, {user_info['y']}"
+                    f"Health: {user_info['player_health']} / {user_info['max_hp']}"
+                    f"Attack: {user_info['player_attack']}"
+                    f"Dexterity: {user_info['player_dexterity']}"
+                    f"Energy: {user_info['player_energy']} / {user_info['max_energy']}"
+                    f"Quest: You don't have any quests."
+                    f"Xp: {user_info['threshold']} / {user_info['xp']}"
+                    f"Name: {name}")
     except Exception as e:
         await ctx.send("An error occurred while fetching stats. Please try again later.")
         logger.error(f"Error in the stats command: {e}")
