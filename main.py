@@ -463,12 +463,13 @@ async def get_place(ctx):
                         # Check if the coordinates match the current region
                         if cords == [x, y]:
                             # Return the region details if coordinates match
-                            return region_info
+                            return region_info, region_key
         # If no region with matching coordinates is found, return None (or handle as needed)
-        return None
+        return None, None
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
+        return None, None
 
 async def accept_quest(ctx, user_id, enemy, amount, xp_reward):
     try:
@@ -952,13 +953,15 @@ async def enter(ctx, place):
     place = place.lower()
     current_place, place_name = await get_place(ctx)
 
-    if place == place_name:
+    if current_place and place == place_name:
         user_data_RPG[user_id]["x"] = current_place["enter_cords"][0]
         user_data_RPG[user_id]["y"] = current_place["enter_cords"][1]
 
         save_data(user_data_RPG)
 
         await ctx.send(f"You enter the {place_name}")
+    else:
+        await ctx.send(f"You cannot enter {place}.")
 
 
 @bot.command()
@@ -988,10 +991,12 @@ async def leave(ctx, place):
 
 @bot.command()
 async def name(ctx, name):
-    user_data_RPG = load_data
+    user_data_RPG = load_data()
     user_id = str(ctx.author.id)
 
     user_data_RPG[user_id]["name"] = name
+    save_data(user_data_RPG)
+    await ctx.send(f"Your name has been set to {name}")
 
 
 @bot.event
