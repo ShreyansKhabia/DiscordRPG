@@ -1,3 +1,7 @@
+# DiscordRPG
+
+DiscordRPG is a Python-based role-playing game bot for Discord that lets users interact and play within a text-based RPG environment directly in their Discord server.
+
 ## Installation Guide
 
 1. **Clone the Repository**
