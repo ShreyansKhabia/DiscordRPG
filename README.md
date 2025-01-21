@@ -32,7 +32,7 @@ pip install -r requirements.txt
 ```sh
 python main.py
 ```
-Usage
+## Usage
 - **Initialize the Bot:** `!initialize`
 - **Ping the Bot:** `!ping`
 - **Move Your Character:** `!move <direction> <amount>`
