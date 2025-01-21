@@ -916,54 +916,53 @@ async def stats(ctx):
         user_info = user_data_RPG[user_id]
         current_quest = user_info.get("current_quest", None)
         name = user_info.get("name", "Anonymous")  # Default to "Anonymous" if name is not set
-        current_place, place_name = get_place(ctx)
+        current_place, place_name = await get_place(ctx)  # Await the coroutine
 
         if current_quest:
             if "leave_cords" in current_place:
                 await ctx.send(
-                    f"Position: {current_place['leave_cords'][0]}, {current_place['leave_cords'][1]}"
-                    f"Health: {user_info['player_health']} / {user_info['max_hp']}"
-                    f"Attack: {user_info['player_attack']}"
-                    f"Dexterity: {user_info['player_dexterity']}"
-                    f"Energy: {user_info['player_energy']} / {user_info['max_energy']}"
-                    f"Quest: {current_quest['enemy']} {current_quest['progress']} / {current_quest['amount']}"
-                    f"Xp: {user_info['threshold']} / {user_info['xp']}"
-                    f"Name: {name}")
+                    f"\nPosition: {current_place['leave_cords'][0]}, {current_place['leave_cords'][1]}"
+                    f"\nHealth: {user_info['player_health']} / {user_info['max_hp']}"
+                    f"\nAttack: {user_info['player_attack']}"
+                    f"\nDexterity: {user_info['player_dexterity']}"
+                    f"\nEnergy: {user_info['player_energy']} / {user_info['max_energy']}"
+                    f"\nQuest: {current_quest['enemy']} {current_quest['progress']} / {current_quest['amount']}"
+                    f"\nXp: {user_info['threshold']} / {user_info['xp']}"
+                    f"\nName: {name}")
             else:
                 await ctx.send(
-                    f"Position: {user_info['x']}, {user_info['y']}"
-                    f"Health: {user_info['player_health']} / {user_info['max_hp']}"
-                    f"Attack: {user_info['player_attack']}"
-                    f"Dexterity: {user_info['player_dexterity']}"
-                    f"Energy: {user_info['player_energy']} / {user_info['max_energy']}"
-                    f"Quest: {current_quest['enemy']} {current_quest['progress']} / {current_quest['amount']}"
-                    f"Xp: {user_info['threshold']} / {user_info['xp']}"
-                    f"Name: {name}")
+                    f"\nPosition: {user_info['x']}, {user_info['y']}"
+                    f"\nHealth: {user_info['player_health']} / {user_info['max_hp']}"
+                    f"\nAttack: {user_info['player_attack']}"
+                    f"\nDexterity: {user_info['player_dexterity']}"
+                    f"\nEnergy: {user_info['player_energy']} / {user_info['max_energy']}"
+                    f"\nQuest: {current_quest['enemy']} {current_quest['progress']} / {current_quest['amount']}"
+                    f"\nXp: {user_info['threshold']} / {user_info['xp']}"
+                    f"\nName: {name}")
         else:
             if "leave_cords" in current_place:
                 await ctx.send(
-                    f"Position: {current_place['leave_cords'][0]}, {current_place['leave_cords'][1]}"
-                    f"Health: {user_info['player_health']} / {user_info['max_hp']}"
-                    f"Attack: {user_info['player_attack']}"
-                    f"Dexterity: {user_info['player_dexterity']}"
-                    f"Energy: {user_info['player_energy']} / {user_info['max_energy']}"
-                    f"Quest: You don't have any quests."
-                    f"Xp: {user_info['threshold']} / {user_info['xp']}"
-                    f"Name: {name}")
+                    f"\nPosition: {current_place['leave_cords'][0]}, {current_place['leave_cords'][1]}"
+                    f"\nHealth: {user_info['player_health']} / {user_info['max_hp']}"
+                    f"\nAttack: {user_info['player_attack']}"
+                    f"\nDexterity: {user_info['player_dexterity']}"
+                    f"\nEnergy: {user_info['player_energy']} / {user_info['max_energy']}"
+                    f"\nQuest: You don't have any quests."
+                    f"\nXp: {user_info['threshold']} / {user_info['xp']}"
+                    f"\nName: {name}")
             else:
                 await ctx.send(
-                    f"Position: {user_info['x']}, {user_info['y']}"
-                    f"Health: {user_info['player_health']} / {user_info['max_hp']}"
-                    f"Attack: {user_info['player_attack']}"
-                    f"Dexterity: {user_info['player_dexterity']}"
-                    f"Energy: {user_info['player_energy']} / {user_info['max_energy']}"
-                    f"Quest: You don't have any quests."
-                    f"Xp: {user_info['threshold']} / {user_info['xp']}"
-                    f"Name: {name}")
+                    f"\nPosition: {user_info['x']}, {user_info['y']}"
+                    f"\nHealth: {user_info['max_hp']} / {user_info['player_health']}"
+                    f"\nAttack: {user_info['player_attack']}"
+                    f"\nDexterity: {user_info['player_dexterity']}"
+                    f"\nEnergy: {user_info['max_energy']} / {user_info['player_energy']}"
+                    f"\nQuest: You don't have any quests."
+                    f"\nXp: {user_info['threshold']} / {user_info['xp']}"
+                    f"\nName: {name}")
     except Exception as e:
         await ctx.send("An error occurred while fetching stats. Please try again later.")
         logger.error(f"Error in the stats command: {e}")
-
 
 @bot.command()
 async def enter(ctx, place):
@@ -998,8 +997,8 @@ async def leave(ctx, place):
                 user_data_RPG[user_id]["x"] = current_place["leave_cords"][0]
                 user_data_RPG[user_id]["y"] = current_place["leave_cords"][1]
 
-                save_data(user_data_RPG)
-                await ctx.send(f"You leave the {place_name}")
+                place_name_without_inside = place_name.replace("inside", "").strip()
+                await ctx.send(f"You leave the {place_name_without_inside}")
             else:
                 await ctx.send(f"The place {place_name} does not have leave coordinates.")
         else:
