@@ -683,6 +683,12 @@ async def move(ctx, direction, amount):
                 player_energy -= 1
                 await ctx.send(f"Your coordinates are now {x}, {y}. Remaining energy: {player_energy}")
 
+                # Save updated coordinates and energy
+                user_data_RPG[user_id]['x'] = x
+                user_data_RPG[user_id]['y'] = y
+                user_data_RPG[user_id]['player_energy'] = player_energy
+                save_data(user_data_RPG)
+
                 place, place_key = await get_place(ctx)
                 if place:
                     await ctx.send(place["description"])
@@ -696,18 +702,12 @@ async def move(ctx, direction, amount):
                             await ctx.send(f"You encounter a {enemy_name}")
                             await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"],
                                         enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
-                user_data_RPG = load_data()
 
-                user_data_RPG[user_id]['x'] = x
-                user_data_RPG[user_id]['y'] = y
-                user_data_RPG[user_id]['player_energy'] = player_energy
-                save_data(user_data_RPG)
         else:
             await ctx.send("You are out of energy, try resting!")
     except Exception as e:
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
-
 
 @bot.command()
 async def rest(ctx, amount):
