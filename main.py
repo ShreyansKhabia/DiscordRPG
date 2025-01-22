@@ -722,7 +722,6 @@ async def move(ctx, direction, amount):
         await ctx.send("An error occurred while moving. Please try again later.")
         logger.error(f"Error in move command: {e}")
 
-
 @bot.command()
 async def rest(ctx, amount):
     try:
