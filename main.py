@@ -653,6 +653,19 @@ async def move(ctx, direction, amount):
         y = user_data_RPG[user_id]['y']
         player_energy = user_data_RPG[user_id]['player_energy']
 
+        # Check if the user is inside a building
+        inside_building = False
+        for kingdom in places['kingdoms'].values():
+            for city in kingdom.values():
+                for place in city.values():
+                    if 'enter_cords' in place and [x, y] == place['enter_cords']:
+                        inside_building = True
+                        break
+
+        if inside_building:
+            await ctx.send("You are inside a building. Use the !leave command to exit the building.")
+            return
+
         valid_directions = ["w", "west", "n", "north", "e", "east", "s", "south"]
         direction = direction.lower()
         if direction not in valid_directions:
@@ -683,6 +696,12 @@ async def move(ctx, direction, amount):
                 player_energy -= 1
                 await ctx.send(f"Your coordinates are now {x}, {y}. Remaining energy: {player_energy}")
 
+                # Save updated coordinates and energy
+                user_data_RPG[user_id]['x'] = x
+                user_data_RPG[user_id]['y'] = y
+                user_data_RPG[user_id]['player_energy'] = player_energy
+                save_data(user_data_RPG)
+
                 place, place_key = await get_place(ctx)
                 if place:
                     await ctx.send(place["description"])
@@ -696,12 +715,7 @@ async def move(ctx, direction, amount):
                             await ctx.send(f"You encounter a {enemy_name}")
                             await fight(ctx, enemy_stats["enemy_health"], enemy_stats["enemy_attack"],
                                         enemy_stats["enemy_dexterity"], enemy_name, enemy_stats["xp"])
-                user_data_RPG = load_data()
 
-                user_data_RPG[user_id]['x'] = x
-                user_data_RPG[user_id]['y'] = y
-                user_data_RPG[user_id]['player_energy'] = player_energy
-                save_data(user_data_RPG)
         else:
             await ctx.send("You are out of energy, try resting!")
     except Exception as e:
@@ -919,7 +933,7 @@ async def stats(ctx):
         current_place, place_name = await get_place(ctx)  # Await the coroutine
 
         if current_quest:
-            if "leave_cords" in current_place:
+            if current_place and "leave_cords" in current_place:
                 await ctx.send(
                     f"\nPosition: {current_place['leave_cords'][0]}, {current_place['leave_cords'][1]}"
                     f"\nHealth: {user_info['player_health']} / {user_info['max_hp']}"
@@ -940,7 +954,7 @@ async def stats(ctx):
                     f"\nXp: {user_info['threshold']} / {user_info['xp']}"
                     f"\nName: {name}")
         else:
-            if "leave_cords" in current_place:
+            if current_place and "leave_cords" in current_place:
                 await ctx.send(
                     f"\nPosition: {current_place['leave_cords'][0]}, {current_place['leave_cords'][1]}"
                     f"\nHealth: {user_info['player_health']} / {user_info['max_hp']}"
@@ -963,6 +977,7 @@ async def stats(ctx):
     except Exception as e:
         await ctx.send("An error occurred while fetching stats. Please try again later.")
         logger.error(f"Error in the stats command: {e}")
+
 
 @bot.command()
 async def enter(ctx, place):
@@ -994,8 +1009,12 @@ async def leave(ctx, place):
 
         if current_place and place in current_place.get('description', '').lower():
             if "leave_cords" in current_place:
+                # Update the coordinates to the leave coordinates
                 user_data_RPG[user_id]["x"] = current_place["leave_cords"][0]
                 user_data_RPG[user_id]["y"] = current_place["leave_cords"][1]
+
+                # Save the updated coordinates
+                save_data(user_data_RPG)
 
                 place_name_without_inside = place_name.replace("inside", "").strip()
                 await ctx.send(f"You leave the {place_name_without_inside}")
