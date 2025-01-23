@@ -246,7 +246,7 @@ biomes = {
     }
 }
 
-dialouges = {
+dialogues = {
     "Agrand": {
         "Quest": {
             "description":
@@ -869,8 +869,8 @@ async def talk(ctx, npc):
         user_id = str(ctx.author.id)
         user_data_RPG = load_data()
 
-        if npc in dialouges:
-            npc_dialogue = dialouges[npc]
+        if npc in dialogues:
+            npc_dialogue = dialogues[npc]
             view = discord.ui.View()
 
             for option in npc_dialogue.keys():
